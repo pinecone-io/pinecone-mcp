@@ -1,8 +1,7 @@
-import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {McpServer, ResourceTemplate} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
-import {QueryFilter} from './mongodb-schema.js';
 
 const {PINECONE_API_KEY} = process.env;
 
@@ -155,7 +154,10 @@ server.tool(
       })
       .optional()
       .describe('Optional reranking parameters'), */
-    filter: QueryFilter.optional().describe('Optional metadata filter to apply to the search'),
+    filter: z
+      .any()
+      .optional()
+      .describe('Optional metadata filter to apply to the search. Use the syntax of MongoDB\'s query and projection operators. This should be a JSON object, not a string.'),
   },
   async ({
     indexName,
