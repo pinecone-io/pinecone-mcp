@@ -1,13 +1,13 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {Pinecone} from '@pinecone-database/pinecone';
-import {z} from 'zod';
 import {CreateIndexForModelRequest} from './schema/CreateIndexForModelRequest.js';
 import {DescribeIndexRequest} from './schema/DescribeIndexRequest.js';
 import {DescribeIndexStatsRequest} from './schema/DescribeIndexStatsRequest.js';
+import {SearchRecordsRequest} from './schema/SearchRecordsRequest.js';
 import {UpsertRecordsRequest} from './schema/UpsertRecordsRequest.js';
 import {PINECONE_MCP_VERSION} from './version.js';
-import {SearchRecordsRequest} from './schema/SearchRecordsRequest.js';
+
 const {PINECONE_API_KEY} = process.env;
 if (!PINECONE_API_KEY) {
   throw new Error('PINECONE_API_KEY environment variable is not set.');
