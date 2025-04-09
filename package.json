@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "pinecone-mcp": "./build/index.js"
+    "pinecone-mcp": "build/index.js"
   },
   "scripts": {
-    "build": "tsc && chmod 755 build/index.js"
+    "build": "tsc && chmod 755 build/index.js",
+    "start": "node build/index.js",
+    "format": "prettier --write 'src/**/*.ts' '*.json' '.prettierrc'"
   },
   "files": [
     "build"
