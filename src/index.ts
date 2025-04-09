@@ -1,9 +1,8 @@
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import setupServer from './server.js';
 
-const server = setupServer();
-
 async function main() {
+  const server = await setupServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Pinecone MCP Server running on stdio');
