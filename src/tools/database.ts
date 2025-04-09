@@ -50,7 +50,7 @@ export default function addDatabaseTools(server: McpServer) {
 
   server.tool(
     'describe-index-stats',
-    'Describe the statistics of a Pinecone index',
+    'Describe the statistics of a Pinecone index and its namespaces',
     DescribeIndexStatsRequest,
     async ({name}) => {
       const index = pc.index(name);
@@ -123,10 +123,7 @@ export default function addDatabaseTools(server: McpServer) {
     SearchRecordsRequest,
     async ({name, namespace, query, rerank}) => {
       const ns = pc.index(name).namespace(namespace);
-      const results = await ns.searchRecords({
-        query,
-        rerank: rerank ? {rankFields: ['text'], ...rerank} : undefined,
-      });
+      const results = await ns.searchRecords({query, rerank});
       return {
         content: [
           {

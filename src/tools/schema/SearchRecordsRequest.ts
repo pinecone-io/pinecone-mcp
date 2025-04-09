@@ -39,6 +39,11 @@ const SearchRecordsRerank = z.object({
     .describe(
       'The number of top results to return after reranking. Defaults to the `topK` in `query`.',
     ),
+  rankFields: z
+    .array(z.string().describe('The name of a field to rerank on.'))
+    .describe(
+      'The fields to rerank on. Generally, this should be the field name specified in the index\'s `fieldMap`.',
+    ),
   query: z
     .string()
     .optional()
