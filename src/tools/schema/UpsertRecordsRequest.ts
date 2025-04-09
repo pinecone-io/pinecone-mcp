@@ -1,11 +1,9 @@
 import {z} from 'zod';
 
-const RecordValue = z
-  .union([z.string(), z.boolean(), z.number(), z.array(z.string())])
-  .describe(
-    `The value of a record field. Field values should be strings, numbers,
+const RecordValue = z.union([z.string(), z.boolean(), z.number(), z.array(z.string())]).describe(
+  `The value of a record field. Field values should be strings, numbers,
     booleans, or arrays of strings. Objects are not permitted as field values.`,
-  );
+);
 
 const Record = z
   .record(z.string(), RecordValue)

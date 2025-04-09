@@ -43,9 +43,9 @@ export default async function addDocsTools(server: McpServer) {
   await client.connect(sseTransport);
 
   server.tool('search-docs', 'Search the Pinecone docs', SearchDocsRequest, async ({query}) => {
-    return await client.callTool({
+    return (await client.callTool({
       name: 'get_context',
       arguments: {query},
-    }) as SearchDocsResult;
+    })) as SearchDocsResult;
   });
 }
