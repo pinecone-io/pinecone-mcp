@@ -1,8 +1,7 @@
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {SSEClientTransport} from '@modelcontextprotocol/sdk/client/sse.js';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {DOCS_SSE_URL} from '../constants.js';
-import {PINECONE_DOCS_API_KEY} from '../env.js';
+import {DOCS_SSE_URL, PINECONE_DOCS_API_KEY} from '../constants.js';
 import {PINECONE_MCP_VERSION} from '../version.js';
 import {SearchDocsRequest} from './schema/SearchDocsRequest.js';
 

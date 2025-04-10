@@ -1,6 +1,6 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {Pinecone} from '@pinecone-database/pinecone';
-import {PINECONE_API_KEY} from '../env.js';
+import {PINECONE_API_KEY} from '../constants.js';
 import {PINECONE_MCP_VERSION} from '../version.js';
 import {CreateIndexForModelRequest} from './schema/CreateIndexForModelRequest.js';
 import {DescribeIndexRequest} from './schema/DescribeIndexRequest.js';
