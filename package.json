@@ -1,18 +1,22 @@
 {
-  "name": "pinecone-mcp",
+  "name": "@pinecone-database/mcp",
   "version": "0.1.0",
   "type": "module",
-  "bin": {
-    "pinecone-mcp": "build/index.js"
+  "main": "dist/index.js",
+  "private": false,
+  "files": [
+    "dist"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pinecone-io/pinecone-mcp"
   },
   "scripts": {
-    "build": "tsc && chmod 755 build/index.js",
-    "start": "node build/index.js",
-    "format": "prettier --write 'src/**/*.ts' '*.json' '.prettierrc'"
+    "build": "tsc",
+    "format": "prettier --write 'src/**/*.ts' '*.json' '.prettierrc'",
+    "start": "node dist/index.js"
   },
-  "files": [
-    "build"
-  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
     "@pinecone-database/pinecone": "^5.1.1",
