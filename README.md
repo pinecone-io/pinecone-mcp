@@ -8,12 +8,12 @@ _Note: This project is still in pre-release. Expect limitations and/or breaking
 changes._
 
 ## Capabilities
-* *Documentation search:* AI tools can search
+* **Documentation search:** AI tools can search
 [Pinecone documentation](https://docs.pinecone.io) to generate better, more
 accurate code.
-* *Index & data management:* AI tools can manage Pinecone indexes and upsert
+* **Index & data management:** AI tools can manage Pinecone indexes and upsert
 data on your behalf.
-* *Search data:* AI tools can search your indexes for relevant data.
+* **Search data:** AI tools can search your indexes for relevant data.
 
 ### Limitations
 Only indexes with integrated inference are supported. Indexes without integrated
