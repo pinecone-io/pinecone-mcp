@@ -31,7 +31,7 @@ runs:
       run: git push --follow-tags
 
     - name: 'Publish to npm'
-      run: npm publish --access=public
+      run: npm publish
       shell: bash
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
