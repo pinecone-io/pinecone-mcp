@@ -8,10 +8,6 @@
     "dist"
   ],
   "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pinecone-io/pinecone-mcp"
-  },
   "scripts": {
     "build": "tsc",
     "format": "prettier --write 'src/**/*.ts' '*.json' '.prettierrc'",
