@@ -19,7 +19,8 @@ Configure Claude or Cursor:
         "/path/to/pinecone-mcp/build/index.js"
       ],
       "env": {
-        "PINECONE_API_KEY": "your pinecone api key here"
+        "PINECONE_API_KEY": "your pinecone api key here",
+        "PINECONE_DOCS_API_KEY": "api key for pinecone-docs assistant"
       }
     }
   }
