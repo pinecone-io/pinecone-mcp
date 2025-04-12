@@ -1,9 +1,9 @@
 import {z} from 'zod';
 import {RerankModel} from './RerankModel.js';
 
-const RerankDocumentsOptions = z
+export const RerankDocumentsOptions = z
   .object({
-    topN: z.number().optional().describe('The number of top results to return after reranking.'),
+    topN: z.number().describe('The number of top results to return after reranking.'),
     rankFields: z
       .array(z.string().describe('The name of a field to rerank on.'))
       .describe(

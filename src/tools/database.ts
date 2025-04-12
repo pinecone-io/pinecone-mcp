@@ -8,6 +8,7 @@ import {DescribeIndexStatsRequest} from './schema/DescribeIndexStatsRequest.js';
 import {SearchRecordsRequest} from './schema/SearchRecordsRequest.js';
 import {UpsertRecordsRequest} from './schema/UpsertRecordsRequest.js';
 import {RerankDocumentsRequest} from './schema/RerankDocumentsRequest.js';
+import {CascadingSearchRequest} from './schema/CascadingSearchRequest.js';
 
 export default function addDatabaseTools(server: McpServer) {
   if (!PINECONE_API_KEY) {
@@ -144,6 +145,45 @@ export default function addDatabaseTools(server: McpServer) {
       const results = pc.inference.rerank(model, query, documents, options);
       return {
         content: [{type: 'text', text: JSON.stringify(results)}],
+      };
+    },
+  );
+
+  server.tool(
+    'cascading-search',
+    'Search across multiple indexes/namespaces for records that are similar to the query text, deduplicate and rerank the results',
+    CascadingSearchRequest,
+    async ({indexes, query, rerank}) => {
+      const initialResults = await Promise.all(
+        indexes.map(async (index) => {
+          const ns = pc.index(index.name).namespace(index.namespace || '');
+          const results = await ns.searchRecords({query});
+          return results;
+        }),
+      );
+
+      const deduplicatedResults: Record<string, Record<string, string>> = {};
+      for (const results of initialResults) {
+        for (const hit of results.result.hits) {
+          if (!deduplicatedResults[hit._id]) {
+            deduplicatedResults[hit._id] = hit.fields as Record<string, string>;
+          }
+        }
+      }
+      const deduplicatedResultsArray = Object.values(deduplicatedResults);
+
+      const rerankedResults = await pc.inference.rerank(
+        rerank.model,
+        rerank.query || query.inputs.text,
+        deduplicatedResultsArray,
+        {
+          topN: rerank.topN || query.topK,
+          rankFields: rerank.rankFields,
+        },
+      );
+
+      return {
+        content: [{type: 'text', text: JSON.stringify(rerankedResults)}],
       };
     },
   );

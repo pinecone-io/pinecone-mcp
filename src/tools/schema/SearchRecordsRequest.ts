@@ -1,20 +1,22 @@
 import {z} from 'zod';
 import {RerankModel} from './RerankModel.js';
 
-const SearchRecordsQuery = z.object({
-  topK: z.number().describe('The number of results to return.'),
-  inputs: z.object({
-    text: z.string().describe('The text to search for.'),
-  }),
-  filter: z
-    .any()
-    .optional()
-    .describe(
-      "Optional metadata filter to apply to the search. Pinecone's filtering query language is based on MongoDB's query and projection operators. Pinecone currently supports a subset of those selectors: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $exists, $and, $or",
-    ),
-});
+export const SearchRecordsQuery = z
+  .object({
+    topK: z.number().describe('The number of results to return.'),
+    inputs: z.object({
+      text: z.string().describe('The text to search for.'),
+    }),
+    filter: z
+      .any()
+      .optional()
+      .describe(
+        "Optional metadata filter to apply to the search. Pinecone's filtering query language is based on MongoDB's query and projection operators. Pinecone currently supports a subset of those selectors: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $exists, $and, $or",
+      ),
+  })
+  .describe('A query to search for records.');
 
-const SearchRecordsRerank = z.object({
+export const SearchRecordsRerank = z.object({
   model: RerankModel,
   topN: z
     .number()
