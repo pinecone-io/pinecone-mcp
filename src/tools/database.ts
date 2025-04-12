@@ -172,15 +172,18 @@ export default function addDatabaseTools(server: McpServer) {
       }
       const deduplicatedResultsArray = Object.values(deduplicatedResults);
 
-      const rerankedResults = await pc.inference.rerank(
-        rerank.model,
-        rerank.query || query.inputs.text,
-        deduplicatedResultsArray,
-        {
-          topN: rerank.topN || query.topK,
-          rankFields: rerank.rankFields,
-        },
-      );
+      const rerankedResults =
+        deduplicatedResultsArray.length > 0
+          ? await pc.inference.rerank(
+              rerank.model,
+              rerank.query || query.inputs.text,
+              deduplicatedResultsArray,
+              {
+                topN: rerank.topN || query.topK,
+                rankFields: rerank.rankFields,
+              },
+            )
+          : [];
 
       return {
         content: [{type: 'text', text: JSON.stringify(rerankedResults)}],
