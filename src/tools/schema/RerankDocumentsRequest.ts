@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {RerankModel} from './RerankModel.js';
 
-const RerankRecordsOptions = z
+const RerankDocumentsOptions = z
   .object({
     topN: z.number().optional().describe('The number of top results to return after reranking.'),
     rankFields: z
@@ -11,6 +11,7 @@ const RerankRecordsOptions = z
       )
       .optional(),
   })
+  .optional()
   .describe('Options for reranking.');
 
 const Documents = z
@@ -26,9 +27,9 @@ const Documents = z
     'The documents to rerank. Can either be an array of text documents or an array of document records.',
   );
 
-export const RerankRecordsRequest = {
+export const RerankDocumentsRequest = {
   model: RerankModel,
   query: z.string().describe('The query to rerank documents against.'),
   documents: Documents,
-  options: RerankRecordsOptions,
+  options: RerankDocumentsOptions,
 };

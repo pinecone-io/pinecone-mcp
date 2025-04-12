@@ -7,7 +7,7 @@ import {DescribeIndexRequest} from './schema/DescribeIndexRequest.js';
 import {DescribeIndexStatsRequest} from './schema/DescribeIndexStatsRequest.js';
 import {SearchRecordsRequest} from './schema/SearchRecordsRequest.js';
 import {UpsertRecordsRequest} from './schema/UpsertRecordsRequest.js';
-import {RerankRecordsRequest} from './schema/RerankRecordsRequest.js';
+import {RerankDocumentsRequest} from './schema/RerankDocumentsRequest.js';
 
 export default function addDatabaseTools(server: McpServer) {
   if (!PINECONE_API_KEY) {
@@ -137,9 +137,9 @@ export default function addDatabaseTools(server: McpServer) {
   );
 
   server.tool(
-    'rerank-records',
+    'rerank-documents',
     'Rerank a set of documents based on a query',
-    RerankRecordsRequest,
+    RerankDocumentsRequest,
     async ({model, query, documents, options}) => {
       const results = pc.inference.rerank(model, query, documents, options);
       return {
