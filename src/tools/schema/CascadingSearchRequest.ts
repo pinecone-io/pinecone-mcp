@@ -7,10 +7,7 @@ const Index = z.object({
   name: z.string().describe('The name of an index to search.'),
   namespace: z
     .string()
-    .optional()
-    .describe(
-      'The namespace to search. This must be a valid namespace for the index. If omitted, the default namespace ("") will be used.',
-    ),
+    .describe('The namespace to search. This must be a valid namespace for the index.'),
 });
 
 const CascadingSearchRerank = z
