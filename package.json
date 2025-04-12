@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pinecone-io/pinecone-mcp"
+    "url": "git+https://github.com/pinecone-io/pinecone-mcp.git"
   },
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",
