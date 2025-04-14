@@ -1,7 +1,6 @@
 import {z} from 'zod';
 import {SearchRecordsQuery} from './SearchRecordsRequest.js';
 import {RerankModel} from './RerankModel.js';
-import {RerankDocumentsOptions} from './RerankDocumentsRequest.js';
 
 const Index = z.object({
   name: z.string().describe('The name of an index to search.'),
