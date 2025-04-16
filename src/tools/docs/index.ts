@@ -1,16 +1,9 @@
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {SSEClientTransport} from '@modelcontextprotocol/sdk/client/sse.js';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {DOCS_SSE_URL, PINECONE_DOCS_API_KEY} from '../constants.js';
-import {PINECONE_MCP_VERSION} from '../version.js';
-import {SearchDocsRequest} from './schema/SearchDocsRequest.js';
-
-type SearchDocsResult = {
-  content: {
-    type: 'text';
-    text: string;
-  }[];
-};
+import {DOCS_SSE_URL, PINECONE_DOCS_API_KEY} from '../../constants.js';
+import {PINECONE_MCP_VERSION} from '../../version.js';
+import {addSearchDocsTool} from './search-docs.js';
 
 export default async function addDocsTools(server: McpServer) {
   if (!PINECONE_DOCS_API_KEY) {
@@ -35,16 +28,11 @@ export default async function addDocsTools(server: McpServer) {
   });
 
   const client = new Client({
-    name: 'pinecone-mcp',
+    name: 'pinecone-docs',
     version: PINECONE_MCP_VERSION,
   });
 
   await client.connect(sseTransport);
 
-  server.tool('search-docs', 'Search the Pinecone docs', SearchDocsRequest, async ({query}) => {
-    return (await client.callTool({
-      name: 'get_context',
-      arguments: {query},
-    })) as SearchDocsResult;
-  });
+  addSearchDocsTool(server, client);
 }

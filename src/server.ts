@@ -1,55 +1,44 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import addDatabaseTools from './tools/database.js';
-import addDocsTools from './tools/docs.js';
+import addDatabaseTools from './tools/database/index.js';
+import addDocsTools from './tools/docs/index.js';
 import {PINECONE_MCP_VERSION} from './version.js';
 
-const SERVER_INSTRUCTIONS = `This MCP server will help you write code for
-Pinecone, and allows you to manage Pinecone indexes and documents.
+const SERVER_INSTRUCTIONS = `Pinecone is a vector database that provides AI
+tools and applications with fast, scalable, and flexible vector search. The
+tools provided by this MCP server will help you understand Pinecone, write
+effective code that makes use of Pinecone, and configure Pinecone to meet your
+application's needs.
 
-Whenever I ask for code for Pinecone, use the \`search-docs\` tool to find
-relevant documentation. Make sure you run exhaustive searches and ensure you
-find proper syntax with the latest version of an SDK. Before writing any code,
-make sure you're referencing example code snippets as much as possible. Do not
-make up field names or values. Always search for the latest version of an SDK
-and make sure you use that (for example, use \`pip install pinecone\`, which
-is v6.0.0+, and not \`pip install pinecone-client\`).
+Pinecone stores data in indexes. Data is stored as records, which are a set of
+fields with values. The index is configured with a field map that specifies
+which field is indexed with a vector embedding. The embedded field may store a
+text document or a chunk of text from a larger document. This is the only field
+that is used for vector search. Other fields may be used to filter results.
+Field values should be strings, numbers, booleans, or arrays; they should not be
+objects.
 
-If I need you to help me manage my Pinecone indexes, you can use any of the
-index-related tools. \`list-indexes\` will list all of my indexes, and
-\`describe-index\` will describe a specific index. \`describe-index-stats\` will
-describe the statistics of a specific index and its namespaces. To create a new
-index, use \`create-index-for-model\`, which will use an embedding model to
-represent text as vectors.
-
-To insert documents into an index, use \`upsert-records\`. Make sure that you
-use a consistent schema for all documents in a namespace. Only the field
-specified in the index's \`fieldMap\` will be embedded as a vector. Other fields
-can be used for metadata filtering. Field values should be strings, numbers,
-booleans, or arrays; they should not be objects.
-
-To search for documents in an index, use \`search-records\`. Make sure to use a
-query that accurately represents my request, and is not too specific or too
-broad. For complicated requests, you may need to use metadata filtering or
-reranking.
-* Metadata filtering can be used to narrow down results, but is not always
-required. Use your discretion. Overly specific or inaccurate metadata filters
-will yield poor results. Metadata filtering should only be used if I need a
-specific value or range of values. Make sure that the fields you filter on are
-present in the records, and that they contain the expected values and value
-types.
-* Reranking can help determine which records are most relevant to the query. To
-use a reranker, provide the \`rerank\` parameter to the \`search-records\` tool.
-Rerankers are especially useful when the query returns lots of results, and it
-is difficult to determine which ones are most relevant.
+If I ask you to write code for Pinecone, use the \`search-docs\` tool first to
+find relevant documentation. Make sure you run exhaustive searches and reference
+example code snippets that demonstrate proper usage of the latest SDK. If the
+code uses an index or namespace, make sure you use the correct names I have
+configured or help me create new ones. Use a consistent schema for all records
+in a namespace, and make sure that field values are not objects.
 
 If any of these instructions are unclear, or if you need more information on how
-to use the tools, or if you receive unexpected errors, use the \`search-docs\`
-tool to find more information.`;
+to use Pinecone, use the \`search-docs\` tool to find more information.
+
+If you receive an unexpected error:
+- Make sure you are following all instructions.
+- Read and parse the error response to understand what happened.
+- A "ValidationError" (-32602) means you made a mistake in your input. The error
+response will include a path that indicates which field is incorrect. Correct
+your input and try again.
+- Search the documentation for more information.`;
 
 export default async function setupServer() {
   const server = new McpServer(
     {
-      name: 'pinecone',
+      name: 'pinecone-mcp',
       version: PINECONE_MCP_VERSION,
     },
     {
@@ -57,8 +46,8 @@ export default async function setupServer() {
     },
   );
 
-  addDatabaseTools(server);
   await addDocsTools(server);
+  addDatabaseTools(server);
 
   return server;
 }

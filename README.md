@@ -1,9 +1,9 @@
-# Pinecone MCP Server
+# Pinecone Developer MCP Server
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
+The [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP)
 is a standard for AI tools to interact with platforms like Pinecone. The
-Pinecone MCP server allows you to connect your AI tool with your Pinecone
-projects.
+Pinecone Developer MCP Server allows you to connect your AI tools and coding
+assistants with your Pinecone projects.
 
 _Note: This project is still in pre-release. Expect limitations and/or breaking
 changes._
