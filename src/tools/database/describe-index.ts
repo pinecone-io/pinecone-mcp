@@ -11,20 +11,15 @@ const SCHEMA = {
 };
 
 export function addDescribeIndexTool(server: McpServer, pc: Pinecone) {
-  server.tool(
-    'describe-index',
-    INSTRUCTIONS,
-    SCHEMA,
-    async ({name}) => {
-      const indexInfo = await pc.describeIndex(name);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(indexInfo, null, 2),
-          },
-        ],
-      };
-    },
-  );
+  server.tool('describe-index', INSTRUCTIONS, SCHEMA, async ({name}) => {
+    const indexInfo = await pc.describeIndex(name);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(indexInfo, null, 2),
+        },
+      ],
+    };
+  });
 }
