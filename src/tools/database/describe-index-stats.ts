@@ -15,12 +15,13 @@ const SCHEMA = {
 
 export function addDescribeIndexStatsTool(server: McpServer, pc: Pinecone) {
   server.tool('describe-index-stats', INSTRUCTIONS, SCHEMA, async ({name}) => {
-    const indexInfo = await pc.describeIndex(name);
+    const index = pc.index(name);
+    const indexStats = await index.describeIndexStats();
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(indexInfo, ['namespaces', 'dimension', 'totalRecordCount'], 2),
+          text: JSON.stringify(indexStats, ['namespaces', 'dimension', 'totalRecordCount'], 2),
         },
       ],
     };
