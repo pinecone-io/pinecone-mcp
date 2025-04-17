@@ -21,7 +21,7 @@ export function addDescribeIndexStatsTool(server: McpServer, pc: Pinecone) {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(indexStats, ['namespaces', 'dimension', 'totalRecordCount'], 2),
+          text: JSON.stringify({...indexStats, indexFullness: undefined}, null, 2),
         },
       ],
     };

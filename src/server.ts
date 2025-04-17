@@ -1,4 +1,6 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {z} from 'zod';
+import {errorMap} from './error.js';
 import addDatabaseTools from './tools/database/index.js';
 import addDocsTools from './tools/docs/index.js';
 import {PINECONE_MCP_VERSION} from './version.js';
@@ -30,12 +32,14 @@ to use Pinecone, use the \`search-docs\` tool to find more information.
 If you receive an unexpected error:
 - Make sure you are following all instructions.
 - Read and parse the error response to understand what happened.
-- A "ValidationError" (-32602) means you made a mistake in your input. The error
-response will include a path that indicates which field is incorrect. Correct
+- A "MCP error -32602" means you made a mistake in your input. Parse the error
+response and input schema carefully to understand what you did wrong. Correct
 your input and try again.
 - Search the documentation for more information.`;
 
 export default async function setupServer() {
+  z.setErrorMap(errorMap);
+
   const server = new McpServer(
     {
       name: 'pinecone-mcp',
