@@ -17,8 +17,6 @@ This MCP server is focused on improving the experience of developers working wit
 
 To configure the MCP server to access your Pinecone project, you will need to generate an API key using the [console](https://app.pinecone.io). Without an API key, your AI tool will still be able to search documentation. However, it will not be able to manage or query your indexes.
 
-_Currently, the documentation search requires an API key for the `pinecone-docs` assistant. Before release, this requirement will be removed._
-
 The MCP server requires [Node.js](https://nodejs.org). Ensure that `node` and `npx` are available in your `PATH`.
 
 Next, you will need to configure your AI assistant to use the MCP server.
@@ -36,8 +34,7 @@ To add the Pinecone MCP server to a project, create a `.cursor/mcp.json` file in
         "-y", "@pinecone-database/mcp"
       ],
       "env": {
-        "PINECONE_API_KEY": "<your pinecone api key>",
-        "PINECONE_DOCS_API_KEY": "<api key for pinecone-docs assistant>"
+        "PINECONE_API_KEY": "<your pinecone api key>"
       }
     }
   }
@@ -61,8 +58,7 @@ Use Claude desktop to locate the `claude_desktop_config.json` file by navigating
         "-y", "@pinecone-database/mcp"
       ],
       "env": {
-        "PINECONE_API_KEY": "<your pinecone api key>",
-        "PINECONE_DOCS_API_KEY": "<api key for pinecone-docs assistant>"
+        "PINECONE_API_KEY": "<your pinecone api key>"
       }
     }
   }

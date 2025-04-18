@@ -1,31 +1,12 @@
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {SSEClientTransport} from '@modelcontextprotocol/sdk/client/sse.js';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {DOCS_SSE_URL, PINECONE_DOCS_API_KEY} from '../../constants.js';
+import {DOCS_SSE_URL} from '../../constants.js';
 import {PINECONE_MCP_VERSION} from '../../version.js';
 import {addSearchDocsTool} from './search-docs.js';
 
 export default async function addDocsTools(server: McpServer) {
-  if (!PINECONE_DOCS_API_KEY) {
-    console.error('Skipping docs tools -- PINECONE_DOCS_API_KEY environment variable is not set.');
-    return;
-  }
-
-  const headers = {
-    Authorization: `Bearer ${PINECONE_DOCS_API_KEY}`,
-  };
-
-  const sseTransport = new SSEClientTransport(new URL(DOCS_SSE_URL), {
-    eventSourceInit: {
-      fetch: (...props: Parameters<typeof fetch>) => {
-        const [url, init = {}] = props;
-        return fetch(url, {...init, headers: {...init.headers, ...headers}});
-      },
-    },
-    requestInit: {
-      headers,
-    },
-  });
+  const sseTransport = new SSEClientTransport(new URL(DOCS_SSE_URL));
 
   const client = new Client({
     name: 'pinecone-docs',
