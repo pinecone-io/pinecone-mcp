@@ -3,38 +3,35 @@ import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
 
-const INSTRUCTIONS = `Rerank a set of documents based on a query. Use this tool
-when you have a collection of documents, and you want to determine which
-documents are most relevant to the query.`;
+const INSTRUCTIONS = `Rerank a set of documents based on a query`;
 
 export const RerankDocumentsOptions = z
   .object({
-    topN: z.number().describe('The number of top results to return after reranking.'),
+    topN: z.number().describe('The number of results to return after reranking.'),
     rankFields: z
-      .array(z.string().describe('The name of a field to rerank on.'))
+      .array(z.string())
       .optional()
       .describe(
         `The fields to rerank on. This should only be included if the documents
         are records. The "bge-reranker-v2-m3" and "pinecone-rerank-v0" models
         support only a single rerank field. "cohere-rerank-3.5" supports
-        multiple rerank fields, ranked based on the order of the fields
-        specified.`,
+        multiple rerank fields.`,
       ),
   })
-  .optional()
-  .describe('Options for reranking.');
+  .optional();
 
 const Documents = z
   .union([
     z
-      .array(z.string().describe('A text document to rerank.'))
+      .array(z.string())
       .describe('An array of text documents to rerank.'),
     z
-      .array(z.record(z.string(), z.string()).describe('A document record to rerank.'))
-      .describe('An array of document records to rerank.'),
+      .array(z.record(z.string(), z.string()))
+      .describe('An array of records to rerank.'),
   ])
   .describe(
-    'The documents to rerank. Can either be an array of text documents or an array of document records.',
+    `A set of documents to rerank. Can either be an array of text documents
+    (strings) or an array of records.`,
   );
 
 export const SCHEMA = {

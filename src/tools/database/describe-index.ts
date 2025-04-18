@@ -1,13 +1,11 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {Pinecone} from '@pinecone-database/pinecone';
-import {INDEX_CONFIG_DESCRIPTION} from './common/index-config.js';
 import {z} from 'zod';
 
-const INSTRUCTIONS = `This tool describes the configuration of a Pinecone index.
-${INDEX_CONFIG_DESCRIPTION}`;
+const INSTRUCTIONS = 'Describe the configuration of a Pinecone index';
 
 const SCHEMA = {
-  name: z.string().describe('The name of the index to describe.'),
+  name: z.string().describe('The index to describe.'),
 };
 
 export function addDescribeIndexTool(server: McpServer, pc: Pinecone) {

@@ -6,36 +6,28 @@ import addDocsTools from './tools/docs/index.js';
 import {PINECONE_MCP_VERSION} from './version.js';
 
 const SERVER_INSTRUCTIONS = `Pinecone is a vector database that provides AI
-tools and applications with fast, scalable, and flexible vector search. The
-tools provided by this MCP server will help you understand Pinecone, write
-effective code that makes use of Pinecone, and configure Pinecone to meet your
-application's needs.
+tools and applications with fast, scalable, and flexible vector search.
 
-Pinecone stores data in indexes. Data is stored as records, which are a set of
-fields with values. The index is configured with a field map that specifies
-which field is indexed with a vector embedding. The embedded field may store a
-text document or a chunk of text from a larger document. This is the only field
-that is used for vector search. Other fields may be used to filter results.
-Field values should be strings, numbers, booleans, or arrays; they should not be
-objects.
+Instructions for usage:
+- Always search the documentation before attempting to explain or write code for
+Pinecone. When writing code, always refer to examples from the documentation. Do
+not make assumptions about usage. Always use the latest SDK version.
 
-If I ask you to write code for Pinecone, use the \`search-docs\` tool first to
-find relevant documentation. Make sure you run exhaustive searches and reference
-example code snippets that demonstrate proper usage of the latest SDK. If the
-code uses an index or namespace, make sure you use the correct names I have
-configured or help me create new ones. Use a consistent schema for all records
-in a namespace, and make sure that field values are not objects.
+- If the code uses an index or namespace, make sure you use the correct names I
+have configured or help me create new ones.
 
-If any of these instructions are unclear, or if you need more information on how
-to use Pinecone, use the \`search-docs\` tool to find more information.
+- Always use a consistent schema for records in an index. Do not use different
+field names in the same index. Always put the text content in the field named in
+the index's "fieldMap". Do not use objects as field values. Do not include a
+"metadata" field.
 
-If you receive an unexpected error:
-- Make sure you are following all instructions.
-- Read and parse the error response to understand what happened.
-- A "MCP error -32602" means you made a mistake in your input. Parse the error
-response and input schema carefully to understand what you did wrong. Correct
-your input and try again.
-- Search the documentation for more information.`;
+- When searching for records, make sure to use a query that accurately reflects
+my needs. Only use a filter if you are sure it will help me find the records I
+need. Craft filters knowing the schema of the data in the index.
+
+- If you receive an error, read the error response to understand what went
+wrong. "MCP error -32602" means your input was wrong. Correct your input by
+following the instructions carefully.`;
 
 export default async function setupServer() {
   z.setErrorMap(errorMap);
