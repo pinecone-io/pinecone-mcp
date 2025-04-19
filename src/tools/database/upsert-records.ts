@@ -8,7 +8,7 @@ const FIELD_VALUE_SCHEMA = z
   .any()
   .refine(
     (value) => {
-      if (typeof value === 'object' && value !== null) {
+      if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
         return false;
       }
       return true;
