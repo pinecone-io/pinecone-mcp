@@ -8,6 +8,8 @@ Once connected, AI tools can:
 * Generate code informed by your index configuration and data, as well as Pinecone documentation and examples.
 * Upsert and search for data in indexes, allowing you to test queries and evaluate results within your dev environment.
 
+See the [docs](https://docs.pinecone.io/guides/operations/mcp-server) for more detailed information.
+
 This MCP server is focused on improving the experience of developers working with Pinecone as part of their technology stack. It is intended for use with coding assistants. Pinecone also offers the [Assistant MCP](https://github.com/pinecone-io/assistant-mcp), which is designed to provide AI assistants with relevant context sourced from your knowledge base.
 
 ## Setup
@@ -41,6 +43,8 @@ To add the Pinecone MCP server to a project, create a `.cursor/mcp.json` file in
 You can check the status of the server in **Cursor Settings > MCP**.
 
 To enable the server globally, add the configuration to the `.cursor/mcp.json` in your home directory instead.
+
+It is recommended to use rules to instruct Cursor on proper usage of the MCP server. Check out the [docs](https://docs.pinecone.io/guides/operations/mcp-server#configure-cursor) for some suggestions.
 
 ### Configure Claude desktop
 
