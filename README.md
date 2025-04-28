@@ -76,7 +76,7 @@ Restart Claude desktop. On the new chat screen, you should see a hammer (MCP) ic
 -At constant.ts : import 'dotenv/config';
 -npx ts-node src/server.ts
 -npm run build     
--npm run start
+-npm run start 
 ```
 
 ## Usage
