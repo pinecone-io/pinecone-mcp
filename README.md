@@ -71,7 +71,7 @@ Restart Claude desktop. On the new chat screen, you should see a hammer (MCP) ic
 
 ## Windows
 ```
--Create .enc file and add PINECONE_API_KEY=<YOUR_PINECONE_API_KEY>
+-Create .env file and add PINECONE_API_KEY=<YOUR_PINECONE_API_KEY>
 -npm install dotenv
 -At constant.ts : import 'dotenv/config';
 -npx ts-node src/server.ts
