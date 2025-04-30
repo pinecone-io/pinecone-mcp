@@ -16,8 +16,6 @@ export default function addDatabaseTools(server: McpServer) {
   if (!PINECONE_API_KEY) {
     console.error('Skipping database tools -- PINECONE_API_KEY environment variable is not set.');
     return;
-  }else{
-    console.log("PINECONE_API_KEY", PINECONE_API_KEY);
   }
 
   const pc = new Pinecone({
