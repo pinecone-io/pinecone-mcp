@@ -68,17 +68,6 @@ Use Claude desktop to locate the `claude_desktop_config.json` file by navigating
 
 Restart Claude desktop. On the new chat screen, you should see a hammer (MCP) icon appear with the new MCP tools available.
 
-
-## Windows
-```
--Create .env file and add PINECONE_API_KEY=<YOUR_PINECONE_API_KEY>
--npm install dotenv
--At constant.ts : import 'dotenv/config';
--npx ts-node src/server.ts
--npm run build     
--npm run start 
-```
-
 ## Usage
 Once configured, your AI tool will automatically make use of the MCP to interact with Pinecone. You may be prompted for permission before a tool can be used. Try asking your AI assistant to set up an example index, upload sample data, or search for you!
 
