@@ -33,5 +33,4 @@ export default function addDatabaseTools(server: McpServer) {
   addSearchRecordsTool(server, pc);
   addRerankDocumentsTool(server, pc);
   addCascadingSearchTool(server, pc);
-  deleteIndexRecordsTool(server, pc);
 }
