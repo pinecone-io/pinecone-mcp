@@ -1,8 +1,8 @@
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
-import {SSEClientTransport} from '@modelcontextprotocol/sdk/client/sse.js';
+import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
-import {DOCS_SSE_URL} from '../../constants.js';
+import {DOCS_MCP_URL} from '../../constants.js';
 import {PINECONE_MCP_VERSION} from '../../version.js';
 
 const INSTRUCTIONS = 'Search Pinecone documentation for relevant information';
@@ -20,14 +20,14 @@ type SearchDocsResult = {
 
 export function addSearchDocsTool(server: McpServer) {
   server.tool('search-docs', INSTRUCTIONS, SCHEMA, async ({query}) => {
-    const sseTransport = new SSEClientTransport(new URL(DOCS_SSE_URL));
+    const httpTransport = new StreamableHTTPClientTransport(new URL(DOCS_MCP_URL));
 
     const client = new Client({
       name: 'pinecone-docs',
       version: PINECONE_MCP_VERSION,
     });
 
-    await client.connect(sseTransport);
+    await client.connect(httpTransport);
 
     return (await client.callTool({
       name: 'get_context',
