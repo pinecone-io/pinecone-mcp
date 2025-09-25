@@ -68,10 +68,28 @@ Use Claude desktop to locate the `claude_desktop_config.json` file by navigating
 
 Restart Claude desktop. On the new chat screen, you should see a hammer (MCP) icon appear with the new MCP tools available.
 
+### Use as a Gemini CLI extension
+
+To install this as a [Gemini CLI](https://github.com/google-gemini/gemini-cli) extension, run the following command:
+
+```
+gemini extensions install https://github.com/pinecone-io/pinecone-mcp
+```
+
+You will need to provide your Pinecone API key in the `PINECONE_API_KEY` environment variable.
+
+```
+export PINECONE_API_KEY=<your pinecone api key>
+```
+
+When you run `gemini` and press `ctrl+t`, `pinecone` should now be shown in the list of installed MCP servers.
+
 ## Usage
+
 Once configured, your AI tool will automatically make use of the MCP to interact with Pinecone. You may be prompted for permission before a tool can be used. Try asking your AI assistant to set up an example index, upload sample data, or search for you!
 
 ### Tools
+
 Pinecone Developer MCP Server provides the following tools for AI assistants to use:
 - `search-docs`: Search the official Pinecone documentation.
 - `list-indexes`: Lists all Pinecone indexes.
@@ -84,7 +102,9 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 - `rerank-documents`: Reranks a collection of records or text documents using a specialized reranking model.
 
 ### Limitations
+
 Only indexes with integrated inference are supported. Assistants, indexes without integrated inference, standalone embeddings, and vector search are not supported.
 
 ## Contributing
+
 We welcome your collaboration in improving the developer MCP experience. Please submit issues in the [GitHub issue tracker](https://github.com/pinecone-io/pinecone-mcp/issues). Information about contributing can be found in [CONTRIBUTING.md](CONTRIBUTING.md).
