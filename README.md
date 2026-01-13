@@ -105,6 +105,15 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 
 Only indexes with integrated inference are supported. Assistants, indexes without integrated inference, standalone embeddings, and vector search are not supported.
 
+
+
+## Running evals
+
+The evals package loads an mcp client that then runs the index.ts file, so there is no need to rebuild between tests. You can load environment variables by prefixing the npx command. Full documentation can be found [here](https://www.mcpevals.io/docs).
+
+```bash
+OPENAI_API_KEY=your-key  npx mcp-eval src/evals/evals.ts src/tools/database/search-records.ts
+```
 ## Contributing
 
 We welcome your collaboration in improving the developer MCP experience. Please submit issues in the [GitHub issue tracker](https://github.com/pinecone-io/pinecone-mcp/issues). Information about contributing can be found in [CONTRIBUTING.md](CONTRIBUTING.md).
