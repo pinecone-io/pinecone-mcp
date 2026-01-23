@@ -18,6 +18,8 @@
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",
     "format": "prettier --write 'src/**/*.ts' '*.json' '.prettierrc'",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -28,9 +30,13 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^22.14.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.53.1",
     "vitest": "^3.2.4"
   }
 }
