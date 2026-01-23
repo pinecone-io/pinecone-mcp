@@ -28,4 +28,4 @@ jobs:
         run: npm test
 
       - name: Check formatting
-        run: npx prettier --check 'src/**/*.ts' '*.json'
+        run: npx prettier --check 'src/**/*.ts' '*.json' '.prettierrc'
