@@ -73,10 +73,14 @@ const SCHEMA = {
 
 export function addUpsertRecordsTool(server: McpServer, pc: Pinecone) {
   server.tool('upsert-records', INSTRUCTIONS, SCHEMA, async ({name, namespace, records}) => {
-    const ns = pc.index(name).namespace(namespace);
-    await ns.upsertRecords(records);
-    return {
-      content: [{type: 'text', text: 'Data upserted successfully'}],
-    };
+    try {
+      const ns = pc.index(name).namespace(namespace);
+      await ns.upsertRecords(records);
+      return {
+        content: [{type: 'text', text: 'Data upserted successfully'}],
+      };
+    } catch (e) {
+      return {isError: true, content: [{type: 'text', text: String(e)}]};
+    }
   });
 }

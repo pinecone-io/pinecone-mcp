@@ -47,10 +47,14 @@ export function addRerankDocumentsTool(server: McpServer, pc: Pinecone) {
     INSTRUCTIONS,
     SCHEMA,
     async ({model, query, documents, options}) => {
-      const results = pc.inference.rerank(model, query, documents, options);
-      return {
-        content: [{type: 'text', text: JSON.stringify(results, null, 2)}],
-      };
+      try {
+        const results = pc.inference.rerank(model, query, documents, options);
+        return {
+          content: [{type: 'text', text: JSON.stringify(results, null, 2)}],
+        };
+      } catch (e) {
+        return {isError: true, content: [{type: 'text', text: String(e)}]};
+      }
     },
   );
 }
