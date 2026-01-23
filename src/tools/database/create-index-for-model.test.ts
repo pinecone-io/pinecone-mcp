@@ -12,18 +12,23 @@ describe('create-index-for-model tool', () => {
     mockServer = createMockServer();
   });
 
-  it('registers with the correct name', () => {
+  it('registers with the correct name and schema', () => {
     addCreateIndexForModelTool(mockServer as never, mockPc as never);
 
     expect(mockServer.tool).toHaveBeenCalledWith(
       'create-index-for-model',
       expect.any(String),
-      expect.objectContaining({name: expect.anything(), embed: expect.anything()}),
+      expect.objectContaining({
+        name: expect.anything(),
+        cloud: expect.anything(),
+        region: expect.anything(),
+        embed: expect.anything(),
+      }),
       expect.any(Function),
     );
   });
 
-  it('creates index when it does not exist', async () => {
+  it('creates index with specified cloud and region', async () => {
     mockPc.listIndexes.mockResolvedValue({indexes: []});
     const mockNewIndex = {
       name: 'new-index',
@@ -36,6 +41,8 @@ describe('create-index-for-model tool', () => {
     const tool = mockServer.getRegisteredTool('create-index-for-model');
     const result = await tool!.handler({
       name: 'new-index',
+      cloud: 'aws',
+      region: 'us-east-1',
       embed: {
         model: 'multilingual-e5-large',
         fieldMap: {text: 'content'},
@@ -62,6 +69,46 @@ describe('create-index-for-model tool', () => {
     });
   });
 
+  it('creates index with custom cloud and region', async () => {
+    mockPc.listIndexes.mockResolvedValue({indexes: []});
+    const mockNewIndex = {
+      name: 'gcp-index',
+      dimension: 1024,
+      metric: 'cosine',
+    };
+    mockPc.createIndexForModel.mockResolvedValue(mockNewIndex);
+
+    addCreateIndexForModelTool(mockServer as never, mockPc as never);
+    const tool = mockServer.getRegisteredTool('create-index-for-model');
+    const result = await tool!.handler({
+      name: 'gcp-index',
+      cloud: 'gcp',
+      region: 'us-central1',
+      embed: {
+        model: 'multilingual-e5-large',
+        fieldMap: {text: 'content'},
+      },
+    });
+
+    expect(mockPc.createIndexForModel).toHaveBeenCalledWith({
+      name: 'gcp-index',
+      cloud: 'gcp',
+      region: 'us-central1',
+      embed: {
+        model: 'multilingual-e5-large',
+        fieldMap: {text: 'content'},
+      },
+      tags: {
+        source: 'mcp',
+        embedding_model: 'multilingual-e5-large',
+      },
+      waitUntilReady: true,
+    });
+    expect(result).toEqual({
+      content: [{type: 'text', text: JSON.stringify(mockNewIndex, null, 2)}],
+    });
+  });
+
   it('returns message when index already exists', async () => {
     const existingIndex = {name: 'existing-index', dimension: 768};
     mockPc.listIndexes.mockResolvedValue({indexes: [existingIndex]});
@@ -70,6 +117,8 @@ describe('create-index-for-model tool', () => {
     const tool = mockServer.getRegisteredTool('create-index-for-model');
     const result = await tool!.handler({
       name: 'existing-index',
+      cloud: 'aws',
+      region: 'us-east-1',
       embed: {
         model: 'multilingual-e5-large',
         fieldMap: {text: 'content'},
@@ -95,6 +144,8 @@ describe('create-index-for-model tool', () => {
     const tool = mockServer.getRegisteredTool('create-index-for-model');
     const result = await tool!.handler({
       name: 'new-index',
+      cloud: 'aws',
+      region: 'us-east-1',
       embed: {
         model: 'multilingual-e5-large',
         fieldMap: {text: 'content'},
