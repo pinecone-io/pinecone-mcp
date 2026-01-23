@@ -54,7 +54,7 @@ export function addCascadingSearchTool(server: McpServer, pc: Pinecone) {
   server.tool('cascading-search', INSTRUCTIONS, SCHEMA, async ({indexes, query, rerank}) => {
     try {
       const initialResults = await Promise.all(
-        indexes.map(async (index) => {
+        indexes.map(async (index: {name: string; namespace: string}) => {
           const ns = pc.index(index.name).namespace(index.namespace || '');
           const results = await ns.searchRecords({query});
           return results;

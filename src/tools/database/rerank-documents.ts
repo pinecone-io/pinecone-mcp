@@ -22,12 +22,8 @@ export const RerankDocumentsOptions = z
 
 const Documents = z
   .union([
-    z
-      .array(z.string())
-      .describe('An array of text documents to rerank.'),
-    z
-      .array(z.record(z.string(), z.string()))
-      .describe('An array of records to rerank.'),
+    z.array(z.string()).describe('An array of text documents to rerank.'),
+    z.array(z.record(z.string(), z.string())).describe('An array of records to rerank.'),
   ])
   .describe(
     `A set of documents to rerank. Can either be an array of text documents
@@ -48,7 +44,7 @@ export function addRerankDocumentsTool(server: McpServer, pc: Pinecone) {
     SCHEMA,
     async ({model, query, documents, options}) => {
       try {
-        const results = pc.inference.rerank(model, query, documents, options);
+        const results = await pc.inference.rerank(model, query, documents, options);
         return {
           content: [{type: 'text', text: JSON.stringify(results, null, 2)}],
         };
