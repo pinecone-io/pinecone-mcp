@@ -10,6 +10,7 @@ import {addListIndexesTool} from './list-indexes.js';
 import {addRerankDocumentsTool} from './rerank-documents.js';
 import {addSearchRecordsTool} from './search-records.js';
 import {addUpsertRecordsTool} from './upsert-records.js';
+import { deleteIndexRecordsTool } from './delete-index-records.js';
 
 export default function addDatabaseTools(server: McpServer) {
   if (!PINECONE_API_KEY) {
@@ -30,4 +31,5 @@ export default function addDatabaseTools(server: McpServer) {
   addSearchRecordsTool(server, pc);
   addRerankDocumentsTool(server, pc);
   addCascadingSearchTool(server, pc);
+  deleteIndexRecordsTool(server, pc);
 }
