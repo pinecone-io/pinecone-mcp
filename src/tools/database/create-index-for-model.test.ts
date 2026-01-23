@@ -28,7 +28,7 @@ describe('create-index-for-model tool', () => {
     );
   });
 
-  it('creates index with default cloud and region when not specified', async () => {
+  it('creates index with specified cloud and region', async () => {
     mockPc.listIndexes.mockResolvedValue({indexes: []});
     const mockNewIndex = {
       name: 'new-index',
