@@ -18,7 +18,9 @@
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",
     "format": "prettier --write 'src/**/*.ts' '*.json' '.prettierrc'",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@types/node": "^22.14.1",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }
