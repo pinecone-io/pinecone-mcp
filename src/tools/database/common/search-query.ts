@@ -7,8 +7,7 @@ export const SEARCH_QUERY_SCHEMA = z
       text: z.string().describe('The text to search for.'),
     }),
     filter: z
-      .object({})
-      .passthrough()
+      .looseObject({})
       .optional()
       .describe(
         `A filter can be used to narrow down results. Use the syntax of

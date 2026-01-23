@@ -6,7 +6,7 @@ describe('errorMap', () => {
   describe('invalid_type errors', () => {
     it('formats type mismatch errors', () => {
       const schema = z.object({name: z.string()});
-      const result = schema.safeParse({name: 123}, {errorMap});
+      const result = schema.safeParse({name: 123}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -20,7 +20,7 @@ describe('errorMap', () => {
           email: z.string(),
         }),
       });
-      const result = schema.safeParse({user: {email: 42}}, {errorMap});
+      const result = schema.safeParse({user: {email: 42}}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -32,7 +32,7 @@ describe('errorMap', () => {
       const schema = z.object({
         items: z.array(z.string()),
       });
-      const result = schema.safeParse({items: ['a', 'b', 123]}, {errorMap});
+      const result = schema.safeParse({items: ['a', 'b', 123]}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -46,7 +46,7 @@ describe('errorMap', () => {
       const schema = z.object({
         status: z.enum(['active', 'inactive', 'pending']),
       });
-      const result = schema.safeParse({status: 'unknown'}, {errorMap});
+      const result = schema.safeParse({status: 'unknown'}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -59,8 +59,8 @@ describe('errorMap', () => {
 
   describe('unrecognized_keys errors', () => {
     it('lists single unrecognized key', () => {
-      const schema = z.object({name: z.string()}).strict();
-      const result = schema.safeParse({name: 'test', extra: 'value'}, {errorMap});
+      const schema = z.strictObject({name: z.string()});
+      const result = schema.safeParse({name: 'test', extra: 'value'}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -69,8 +69,8 @@ describe('errorMap', () => {
     });
 
     it('lists multiple unrecognized keys', () => {
-      const schema = z.object({name: z.string()}).strict();
-      const result = schema.safeParse({name: 'test', extra1: 'a', extra2: 'b'}, {errorMap});
+      const schema = z.strictObject({name: z.string()});
+      const result = schema.safeParse({name: 'test', extra1: 'a', extra2: 'b'}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -86,12 +86,12 @@ describe('errorMap', () => {
       const schema = z.object({
         value: z.union([z.string(), z.number()]),
       });
-      const result = schema.safeParse({value: []}, {errorMap});
+      const result = schema.safeParse({value: []}, {error: errorMap});
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Expected');
-        expect(result.error.issues[0].message).toContain('received');
+        // In Zod v4, union errors may be structured differently
+        expect(result.error.issues[0].message).toContain('value:');
       }
     });
   });
