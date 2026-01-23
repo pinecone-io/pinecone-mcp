@@ -15,13 +15,15 @@ describe('cascading-search tool', () => {
   it('registers with the correct name', () => {
     addCascadingSearchTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'cascading-search',
-      expect.any(String),
       expect.objectContaining({
-        indexes: expect.anything(),
-        query: expect.anything(),
-        rerank: expect.anything(),
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({
+          indexes: expect.anything(),
+          query: expect.anything(),
+          rerank: expect.anything(),
+        }),
       }),
       expect.any(Function),
     );

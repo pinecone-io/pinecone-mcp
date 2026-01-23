@@ -15,13 +15,15 @@ describe('upsert-records tool handler', () => {
   it('registers with the correct name', () => {
     addUpsertRecordsTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'upsert-records',
-      expect.any(String),
       expect.objectContaining({
-        name: expect.anything(),
-        namespace: expect.anything(),
-        records: expect.anything(),
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({
+          name: expect.anything(),
+          namespace: expect.anything(),
+          records: expect.anything(),
+        }),
       }),
       expect.any(Function),
     );

@@ -9,19 +9,23 @@ const SCHEMA = {
 };
 
 export function addDescribeIndexTool(server: McpServer, pc: Pinecone) {
-  server.tool('describe-index', INSTRUCTIONS, SCHEMA, async ({name}) => {
-    try {
-      const indexInfo = await pc.describeIndex(name);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(indexInfo, null, 2),
-          },
-        ],
-      };
-    } catch (e) {
-      return {isError: true, content: [{type: 'text', text: String(e)}]};
-    }
-  });
+  server.registerTool(
+    'describe-index',
+    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    async ({name}) => {
+      try {
+        const indexInfo = await pc.describeIndex(name);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(indexInfo, null, 2),
+            },
+          ],
+        };
+      } catch (e) {
+        return {isError: true, content: [{type: 'text', text: String(e)}]};
+      }
+    },
+  );
 }

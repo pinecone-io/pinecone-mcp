@@ -15,10 +15,12 @@ describe('list-indexes tool', () => {
   it('registers with the correct name', () => {
     addListIndexesTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'list-indexes',
-      expect.any(String),
-      expect.any(Object),
+      expect.objectContaining({
+        description: expect.any(String),
+        inputSchema: expect.any(Object),
+      }),
       expect.any(Function),
     );
   });

@@ -38,10 +38,9 @@ export const SCHEMA = {
 };
 
 export function addRerankDocumentsTool(server: McpServer, pc: Pinecone) {
-  server.tool(
+  server.registerTool(
     'rerank-documents',
-    INSTRUCTIONS,
-    SCHEMA,
+    {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async ({model, query, documents, options}) => {
       try {
         const results = await pc.inference.rerank(model, query, documents, options);

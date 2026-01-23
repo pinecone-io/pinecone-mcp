@@ -51,10 +51,9 @@ const SCHEMA = {
 };
 
 export function addCreateIndexForModelTool(server: McpServer, pc: Pinecone) {
-  server.tool(
+  server.registerTool(
     'create-index-for-model',
-    INSTRUCTIONS,
-    SCHEMA,
+    {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async ({name, cloud, region, embed}) => {
       try {
         // Check if the index already exists

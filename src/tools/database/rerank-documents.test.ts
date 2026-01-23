@@ -15,13 +15,15 @@ describe('rerank-documents tool', () => {
   it('registers with the correct name', () => {
     addRerankDocumentsTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'rerank-documents',
-      expect.any(String),
       expect.objectContaining({
-        model: expect.anything(),
-        query: expect.anything(),
-        documents: expect.anything(),
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({
+          model: expect.anything(),
+          query: expect.anything(),
+          documents: expect.anything(),
+        }),
       }),
       expect.any(Function),
     );

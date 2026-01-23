@@ -15,10 +15,12 @@ describe('describe-index tool', () => {
   it('registers with the correct name', () => {
     addDescribeIndexTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'describe-index',
-      expect.any(String),
-      expect.objectContaining({name: expect.anything()}),
+      expect.objectContaining({
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({name: expect.anything()}),
+      }),
       expect.any(Function),
     );
   });
