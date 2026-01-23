@@ -4,47 +4,11 @@ import {z} from 'zod';
 
 const INSTRUCTIONS = 'Insert or update records in a Pinecone index';
 
-const FIELD_VALUE_SCHEMA = z
-  .any()
-  .refine(
-    (value) => {
-      if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'A record must not contain nested objects.',
-    },
-  )
-  .refine(
-    (value) => {
-      if (value === null) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'A field value must not be null.',
-    },
-  )
-  .refine(
-    (value) => {
-      if (Array.isArray(value)) {
-        return value.every((item) => typeof item === 'string');
-      }
-      return true;
-    },
-    {
-      message: 'Array field values must contain only strings.',
-    },
-  )
-  .describe(
-    `A field value. Must be a string, number, boolean, or array of strings.
-    Nested objects are not permitted.`,
-  );
+export const FIELD_VALUE_SCHEMA = z
+  .union([z.string(), z.number(), z.boolean(), z.array(z.string())])
+  .describe('A field value. Must be a string, number, boolean, or array of strings.');
 
-const RECORD_SCHEMA = z
+export const RECORD_SCHEMA = z
   .record(z.string(), FIELD_VALUE_SCHEMA)
   .refine(
     (record) => {
