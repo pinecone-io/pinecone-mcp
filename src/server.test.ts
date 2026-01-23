@@ -27,15 +27,6 @@ describe('setupServer', () => {
     expect(server).toBeInstanceOf(McpServer);
   });
 
-  it('configures server with correct name and version', async () => {
-    const {default: setupServer} = await import('./server.js');
-    const server = await setupServer();
-
-    // The server should have the correct configuration
-    // We can check this by inspecting the server's internal state
-    expect(server).toBeDefined();
-  });
-
   it('registers docs tools', async () => {
     const {default: addDocsTools} = await import('./tools/docs/index.js');
     const {default: setupServer} = await import('./server.js');
