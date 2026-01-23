@@ -28,10 +28,12 @@ describe('search-docs tool', () => {
   it('registers with the correct name', () => {
     addSearchDocsTool(mockServer as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'search-docs',
-      expect.any(String),
-      expect.objectContaining({query: expect.anything()}),
+      expect.objectContaining({
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({query: expect.anything()}),
+      }),
       expect.any(Function),
     );
   });

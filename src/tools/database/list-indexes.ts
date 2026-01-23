@@ -4,7 +4,7 @@ import {Pinecone} from '@pinecone-database/pinecone';
 const INSTRUCTIONS = `List all Pinecone indexes`;
 
 export function addListIndexesTool(server: McpServer, pc: Pinecone) {
-  server.tool('list-indexes', INSTRUCTIONS, {}, async () => {
+  server.registerTool('list-indexes', {description: INSTRUCTIONS, inputSchema: {}}, async () => {
     try {
       const indexes = await pc.listIndexes();
       return {

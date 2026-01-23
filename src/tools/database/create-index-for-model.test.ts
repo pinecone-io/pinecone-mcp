@@ -15,14 +15,16 @@ describe('create-index-for-model tool', () => {
   it('registers with the correct name and schema', () => {
     addCreateIndexForModelTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'create-index-for-model',
-      expect.any(String),
       expect.objectContaining({
-        name: expect.anything(),
-        cloud: expect.anything(),
-        region: expect.anything(),
-        embed: expect.anything(),
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({
+          name: expect.anything(),
+          cloud: expect.anything(),
+          region: expect.anything(),
+          embed: expect.anything(),
+        }),
       }),
       expect.any(Function),
     );

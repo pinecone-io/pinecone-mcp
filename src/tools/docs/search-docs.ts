@@ -42,14 +42,18 @@ function getDocsClient(): Promise<Client> {
 }
 
 export function addSearchDocsTool(server: McpServer) {
-  server.tool('search-docs', INSTRUCTIONS, SCHEMA, async ({query}) => {
-    const client = await getDocsClient();
+  server.registerTool(
+    'search-docs',
+    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    async ({query}) => {
+      const client = await getDocsClient();
 
-    return (await client.callTool({
-      name: 'get_context',
-      arguments: {query},
-    })) as SearchDocsResult;
-  });
+      return (await client.callTool({
+        name: 'get_context',
+        arguments: {query},
+      })) as SearchDocsResult;
+    },
+  );
 }
 
 // For testing: reset the cached client

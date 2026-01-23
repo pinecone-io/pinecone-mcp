@@ -15,13 +15,15 @@ describe('search-records tool', () => {
   it('registers with the correct name', () => {
     addSearchRecordsTool(mockServer as never, mockPc as never);
 
-    expect(mockServer.tool).toHaveBeenCalledWith(
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
       'search-records',
-      expect.any(String),
       expect.objectContaining({
-        name: expect.anything(),
-        namespace: expect.anything(),
-        query: expect.anything(),
+        description: expect.any(String),
+        inputSchema: expect.objectContaining({
+          name: expect.anything(),
+          namespace: expect.anything(),
+          query: expect.anything(),
+        }),
       }),
       expect.any(Function),
     );
