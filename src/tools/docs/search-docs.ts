@@ -18,20 +18,41 @@ type SearchDocsResult = {
   }[];
 };
 
+let clientPromise: Promise<Client> | null = null;
+
+async function initializeClient(): Promise<Client> {
+  const httpTransport = new StreamableHTTPClientTransport(new URL(DOCS_MCP_URL));
+  const client = new Client({
+    name: 'pinecone-docs',
+    version: PINECONE_MCP_VERSION,
+  });
+  await client.connect(httpTransport);
+  return client;
+}
+
+function getDocsClient(): Promise<Client> {
+  if (!clientPromise) {
+    clientPromise = initializeClient().catch((error) => {
+      // Reset on failure so next call can retry
+      clientPromise = null;
+      throw error;
+    });
+  }
+  return clientPromise;
+}
+
 export function addSearchDocsTool(server: McpServer) {
   server.tool('search-docs', INSTRUCTIONS, SCHEMA, async ({query}) => {
-    const httpTransport = new StreamableHTTPClientTransport(new URL(DOCS_MCP_URL));
-
-    const client = new Client({
-      name: 'pinecone-docs',
-      version: PINECONE_MCP_VERSION,
-    });
-
-    await client.connect(httpTransport);
+    const client = await getDocsClient();
 
     return (await client.callTool({
       name: 'get_context',
       arguments: {query},
     })) as SearchDocsResult;
   });
+}
+
+// For testing: reset the cached client
+export function resetDocsClient() {
+  clientPromise = null;
 }
