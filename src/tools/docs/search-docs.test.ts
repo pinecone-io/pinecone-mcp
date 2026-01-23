@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
-import {addSearchDocsTool} from './search-docs.js';
+import {addSearchDocsTool, resetDocsClient} from './search-docs.js';
 
 // Mock the MCP SDK client modules
 vi.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
@@ -21,6 +21,7 @@ describe('search-docs tool', () => {
 
   beforeEach(() => {
     mockServer = createMockServer();
+    resetDocsClient();
     vi.clearAllMocks();
   });
 
@@ -43,5 +44,18 @@ describe('search-docs tool', () => {
     expect(result).toEqual({
       content: [{type: 'text', text: 'Documentation result'}],
     });
+  });
+
+  it('reuses the client connection across multiple calls', async () => {
+    const {Client} = await import('@modelcontextprotocol/sdk/client/index.js');
+
+    addSearchDocsTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-docs');
+
+    await tool!.handler({query: 'first query'});
+    await tool!.handler({query: 'second query'});
+
+    // Client should only be instantiated once
+    expect(Client).toHaveBeenCalledTimes(1);
   });
 });
