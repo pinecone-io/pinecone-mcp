@@ -4,9 +4,7 @@
   "mcpServers": {
     "pinecone": {
       "command": "npx",
-      "args": [
-        "-y", "@pinecone-database/mcp"
-      ]
+      "args": ["-y", "@pinecone-database/mcp"]
     }
   }
 }

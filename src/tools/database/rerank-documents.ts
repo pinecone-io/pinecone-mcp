@@ -22,12 +22,8 @@ export const RerankDocumentsOptions = z
 
 const Documents = z
   .union([
-    z
-      .array(z.string())
-      .describe('An array of text documents to rerank.'),
-    z
-      .array(z.record(z.string(), z.string()))
-      .describe('An array of records to rerank.'),
+    z.array(z.string()).describe('An array of text documents to rerank.'),
+    z.array(z.record(z.string(), z.string())).describe('An array of records to rerank.'),
   ])
   .describe(
     `A set of documents to rerank. Can either be an array of text documents
