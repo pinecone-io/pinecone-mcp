@@ -2,10 +2,23 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
 
-const INSTRUCTIONS = 'Create a Pinecone index with integrated inference';
+const INSTRUCTIONS =
+  'Create a Pinecone index with integrated inference. Supports AWS, GCP, and Azure cloud providers.';
 
 const SCHEMA = {
   name: z.string().describe('A unique name to identify the new index.'),
+  cloud: z
+    .enum(['aws', 'gcp', 'azure'])
+    .optional()
+    .default('aws')
+    .describe('The cloud provider for the index. Defaults to aws.'),
+  region: z
+    .string()
+    .optional()
+    .default('us-east-1')
+    .describe(
+      'The region for the index. Common regions: aws (us-east-1, us-west-2, eu-west-1), gcp (us-central1, europe-west1), azure (eastus, westeurope). Defaults to us-east-1.',
+    ),
   embed: z
     .object({
       model: z
@@ -38,46 +51,51 @@ const SCHEMA = {
 };
 
 export function addCreateIndexForModelTool(server: McpServer, pc: Pinecone) {
-  server.tool('create-index-for-model', INSTRUCTIONS, SCHEMA, async ({name, embed}) => {
-    try {
-      // Check if the index already exists
-      const existingIndexes = await pc.listIndexes();
-      const existingIndex = existingIndexes.indexes?.find((index) => index.name === name);
-      if (existingIndex) {
+  server.tool(
+    'create-index-for-model',
+    INSTRUCTIONS,
+    SCHEMA,
+    async ({name, cloud, region, embed}) => {
+      try {
+        // Check if the index already exists
+        const existingIndexes = await pc.listIndexes();
+        const existingIndex = existingIndexes.indexes?.find((index) => index.name === name);
+        if (existingIndex) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Index not created. An index named "${name}" already exists:
+                    ${JSON.stringify(existingIndex, null, 2)}`,
+              },
+            ],
+          };
+        }
+
+        // Create the new index
+        const indexInfo = await pc.createIndexForModel({
+          name,
+          cloud,
+          region,
+          embed,
+          tags: {
+            source: 'mcp',
+            embedding_model: embed.model,
+          },
+          waitUntilReady: true,
+        });
+
         return {
           content: [
             {
               type: 'text',
-              text: `Index not created. An index named "${name}" already exists:
-                    ${JSON.stringify(existingIndex, null, 2)}`,
+              text: JSON.stringify(indexInfo, null, 2),
             },
           ],
         };
+      } catch (e) {
+        return {isError: true, content: [{type: 'text', text: String(e)}]};
       }
-
-      // Create the new index
-      const indexInfo = await pc.createIndexForModel({
-        name,
-        cloud: 'aws',
-        region: 'us-east-1',
-        embed,
-        tags: {
-          source: 'mcp',
-          embedding_model: embed.model,
-        },
-        waitUntilReady: true,
-      });
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(indexInfo, null, 2),
-          },
-        ],
-      };
-    } catch (e) {
-      return {isError: true, content: [{type: 'text', text: String(e)}]};
-    }
-  });
+    },
+  );
 }
