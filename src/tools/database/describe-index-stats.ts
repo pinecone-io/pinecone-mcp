@@ -10,15 +10,19 @@ const SCHEMA = {
 
 export function addDescribeIndexStatsTool(server: McpServer, pc: Pinecone) {
   server.tool('describe-index-stats', INSTRUCTIONS, SCHEMA, async ({name}) => {
-    const index = pc.index(name);
-    const indexStats = await index.describeIndexStats();
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({...indexStats, indexFullness: undefined}, null, 2),
-        },
-      ],
-    };
+    try {
+      const index = pc.index(name);
+      const indexStats = await index.describeIndexStats();
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({...indexStats, indexFullness: undefined}, null, 2),
+          },
+        ],
+      };
+    } catch (e) {
+      return {isError: true, content: [{type: 'text', text: String(e)}]};
+    }
   });
 }

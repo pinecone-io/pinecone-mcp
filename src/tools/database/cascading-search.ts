@@ -52,44 +52,48 @@ export const SCHEMA = {
 
 export function addCascadingSearchTool(server: McpServer, pc: Pinecone) {
   server.tool('cascading-search', INSTRUCTIONS, SCHEMA, async ({indexes, query, rerank}) => {
-    const initialResults = await Promise.all(
-      indexes.map(async (index) => {
-        const ns = pc.index(index.name).namespace(index.namespace || '');
-        const results = await ns.searchRecords({query});
-        return results;
-      }),
-    );
+    try {
+      const initialResults = await Promise.all(
+        indexes.map(async (index) => {
+          const ns = pc.index(index.name).namespace(index.namespace || '');
+          const results = await ns.searchRecords({query});
+          return results;
+        }),
+      );
 
-    const deduplicatedResults: Record<string, Record<string, string>> = {};
-    for (const results of initialResults) {
-      for (const hit of results.result.hits) {
-        if (!deduplicatedResults[hit._id]) {
-          deduplicatedResults[hit._id] = hit.fields as Record<string, string>;
+      const deduplicatedResults: Record<string, Record<string, string>> = {};
+      for (const results of initialResults) {
+        for (const hit of results.result.hits) {
+          if (!deduplicatedResults[hit._id]) {
+            deduplicatedResults[hit._id] = hit.fields as Record<string, string>;
+          }
         }
       }
+      const deduplicatedResultsArray = Object.values(deduplicatedResults);
+
+      const rerankedResults =
+        deduplicatedResultsArray.length > 0
+          ? await pc.inference.rerank(
+              rerank.model,
+              rerank.query || query.inputs.text,
+              deduplicatedResultsArray,
+              {
+                topN: rerank.topN || query.topK,
+                rankFields: rerank.rankFields,
+              },
+            )
+          : [];
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(rerankedResults, null, 2),
+          },
+        ],
+      };
+    } catch (e) {
+      return {isError: true, content: [{type: 'text', text: String(e)}]};
     }
-    const deduplicatedResultsArray = Object.values(deduplicatedResults);
-
-    const rerankedResults =
-      deduplicatedResultsArray.length > 0
-        ? await pc.inference.rerank(
-            rerank.model,
-            rerank.query || query.inputs.text,
-            deduplicatedResultsArray,
-            {
-              topN: rerank.topN || query.topK,
-              rankFields: rerank.rankFields,
-            },
-          )
-        : [];
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(rerankedResults, null, 2),
-        },
-      ],
-    };
   });
 }

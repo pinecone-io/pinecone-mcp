@@ -39,41 +39,45 @@ const SCHEMA = {
 
 export function addCreateIndexForModelTool(server: McpServer, pc: Pinecone) {
   server.tool('create-index-for-model', INSTRUCTIONS, SCHEMA, async ({name, embed}) => {
-    // Check if the index already exists
-    const existingIndexes = await pc.listIndexes();
-    const existingIndex = existingIndexes.indexes?.find((index) => index.name === name);
-    if (existingIndex) {
+    try {
+      // Check if the index already exists
+      const existingIndexes = await pc.listIndexes();
+      const existingIndex = existingIndexes.indexes?.find((index) => index.name === name);
+      if (existingIndex) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Index not created. An index named "${name}" already exists:
+                    ${JSON.stringify(existingIndex, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Create the new index
+      const indexInfo = await pc.createIndexForModel({
+        name,
+        cloud: 'aws',
+        region: 'us-east-1',
+        embed,
+        tags: {
+          source: 'mcp',
+          embedding_model: embed.model,
+        },
+        waitUntilReady: true,
+      });
+
       return {
         content: [
           {
             type: 'text',
-            text: `Index not created. An index named "${name}" already exists:
-                  ${JSON.stringify(existingIndex, null, 2)}`,
+            text: JSON.stringify(indexInfo, null, 2),
           },
         ],
       };
+    } catch (e) {
+      return {isError: true, content: [{type: 'text', text: String(e)}]};
     }
-
-    // Create the new index
-    const indexInfo = await pc.createIndexForModel({
-      name,
-      cloud: 'aws',
-      region: 'us-east-1',
-      embed,
-      tags: {
-        source: 'mcp',
-        embedding_model: embed.model,
-      },
-      waitUntilReady: true,
-    });
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(indexInfo, null, 2),
-        },
-      ],
-    };
   });
 }

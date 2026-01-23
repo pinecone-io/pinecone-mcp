@@ -47,15 +47,19 @@ const SCHEMA = {
 
 export function addSearchRecordsTool(server: McpServer, pc: Pinecone) {
   server.tool('search-records', INSTRUCTIONS, SCHEMA, async ({name, namespace, query, rerank}) => {
-    const ns = pc.index(name).namespace(namespace);
-    const results = await ns.searchRecords({query, rerank});
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    };
+    try {
+      const ns = pc.index(name).namespace(namespace);
+      const results = await ns.searchRecords({query, rerank});
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(results, null, 2),
+          },
+        ],
+      };
+    } catch (e) {
+      return {isError: true, content: [{type: 'text', text: String(e)}]};
+    }
   });
 }
