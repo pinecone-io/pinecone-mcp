@@ -59,6 +59,8 @@ jobs:
         uses: ./.github/actions/setup
         with:
           node_version: '24.x'
+          git_email: 'clients@pinecone.io'
+          git_username: ${{ github.actor }}
 
       ##### VERSION BUMP #####
       - name: 'Bump version for production release'
@@ -83,12 +85,6 @@ jobs:
           echo "version=$newVersion" >> $GITHUB_OUTPUT
 
       ##### COMMIT AND TAG VERSION CHANGES (prod) #####
-      - name: Configure git CLI
-        if: github.event.inputs.releaseMode == 'prod'
-        shell: bash
-        run: |
-          git config --global user.email "clients@pinecone.io"
-          git config --global user.name "${{ github.actor }}"
       - name: Commit and tag version changes for prod
         if: github.event.inputs.releaseMode == 'prod'
         shell: bash
