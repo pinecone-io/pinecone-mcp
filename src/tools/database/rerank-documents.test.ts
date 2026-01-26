@@ -97,7 +97,7 @@ describe('rerank-documents tool', () => {
 
     expect(result).toEqual({
       isError: true,
-      content: [{type: 'text', text: 'Error: Rerank failed'}],
+      content: [{type: 'text', text: 'Rerank failed'}],
     });
   });
 });

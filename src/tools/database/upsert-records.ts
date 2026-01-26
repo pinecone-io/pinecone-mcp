@@ -1,6 +1,7 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {IntegratedRecord} from '@pinecone-database/pinecone';
 import {z} from 'zod';
+import {formatError} from './common/format-error.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS = 'Insert or update records in a Pinecone index';
@@ -56,7 +57,7 @@ export function addUpsertRecordsTool(server: McpServer) {
           content: [{type: 'text' as const, text: 'Data upserted successfully'}],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
       }
     },
   );
