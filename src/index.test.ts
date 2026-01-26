@@ -9,10 +9,14 @@ vi.mock('./server.js', () => ({
   default: vi.fn().mockResolvedValue(mockServer),
 }));
 
-// Mock the stdio transport
+// Mock the stdio transport using class syntax for vitest 4.x compatibility
 const mockTransport = {mockTransport: true};
 vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
-  StdioServerTransport: vi.fn().mockImplementation(() => mockTransport),
+  StdioServerTransport: class MockStdioServerTransport {
+    constructor() {
+      Object.assign(this, mockTransport);
+    }
+  },
 }));
 
 describe('index (main entry point)', () => {
@@ -34,15 +38,13 @@ describe('index (main entry point)', () => {
 
   it('sets up server and connects transport on successful start', async () => {
     const {default: setupServer} = await import('./server.js');
-    const {StdioServerTransport} = await import('@modelcontextprotocol/sdk/server/stdio.js');
 
     await import('./index.js');
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(setupServer).toHaveBeenCalled();
-    expect(StdioServerTransport).toHaveBeenCalled();
-    expect(mockServer.connect).toHaveBeenCalledWith(mockTransport);
+    expect(mockServer.connect).toHaveBeenCalledWith(expect.objectContaining({mockTransport: true}));
     expect(consoleErrorSpy).toHaveBeenCalledWith('Pinecone MCP Server running on stdio');
   });
 

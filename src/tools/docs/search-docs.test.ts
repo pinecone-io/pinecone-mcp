@@ -2,18 +2,28 @@ import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
 import {addSearchDocsTool, resetDocsClient} from './search-docs.js';
 
-// Mock the MCP SDK client modules
+// Track mock instances for vitest 4.x compatibility
+let clientInstanceCount = 0;
+
+// Mock the MCP SDK client modules using class syntax for vitest 4.x
 vi.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
-  Client: vi.fn().mockImplementation(() => ({
-    connect: vi.fn().mockResolvedValue(undefined),
-    callTool: vi.fn().mockResolvedValue({
+  Client: class MockClient {
+    connect = vi.fn().mockResolvedValue(undefined);
+    callTool = vi.fn().mockResolvedValue({
       content: [{type: 'text', text: 'Documentation result'}],
-    }),
-  })),
+    });
+    constructor() {
+      clientInstanceCount++;
+    }
+  },
 }));
 
 vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
-  StreamableHTTPClientTransport: vi.fn().mockImplementation(() => ({})),
+  StreamableHTTPClientTransport: class MockStreamableHTTPClientTransport {
+    constructor() {
+      // Empty constructor
+    }
+  },
 }));
 
 describe('search-docs tool', () => {
@@ -23,6 +33,7 @@ describe('search-docs tool', () => {
     mockServer = createMockServer();
     resetDocsClient();
     vi.clearAllMocks();
+    clientInstanceCount = 0;
   });
 
   it('registers with the correct name', () => {
@@ -49,8 +60,6 @@ describe('search-docs tool', () => {
   });
 
   it('reuses the client connection across multiple calls', async () => {
-    const {Client} = await import('@modelcontextprotocol/sdk/client/index.js');
-
     addSearchDocsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('search-docs');
 
@@ -58,6 +67,6 @@ describe('search-docs tool', () => {
     await tool!.handler({query: 'second query'});
 
     // Client should only be instantiated once
-    expect(Client).toHaveBeenCalledTimes(1);
+    expect(clientInstanceCount).toBe(1);
   });
 });
