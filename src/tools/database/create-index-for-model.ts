@@ -1,9 +1,16 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
+import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS =
   'Create a Pinecone index with integrated inference. Supports AWS, GCP, and Azure cloud providers.';
+
+type CloudProvider = 'aws' | 'gcp' | 'azure';
+type EmbedModel = 'multilingual-e5-large' | 'llama-text-embed-v2' | 'pinecone-sparse-english-v0';
+type EmbedConfig = {
+  model: EmbedModel;
+  fieldMap: {text: string};
+};
 
 const SCHEMA = {
   name: z.string().describe('A unique name to identify the new index.'),
@@ -50,11 +57,20 @@ const SCHEMA = {
     .describe('Configure an embedding model that converts text into a vector.'),
 };
 
-export function addCreateIndexForModelTool(server: McpServer, pc: Pinecone) {
-  server.registerTool(
+type CreateIndexArgs = {
+  name: string;
+  cloud: CloudProvider;
+  region: string;
+  embed: EmbedConfig;
+};
+
+export function addCreateIndexForModelTool(server: McpServer) {
+  registerDatabaseTool(
+    server,
     'create-index-for-model',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
-    async ({name, cloud, region, embed}) => {
+    async (args, pc) => {
+      const {name, cloud, region, embed} = args as CreateIndexArgs;
       try {
         // Check if the index already exists
         const existingIndexes = await pc.listIndexes();
@@ -63,7 +79,7 @@ export function addCreateIndexForModelTool(server: McpServer, pc: Pinecone) {
           return {
             content: [
               {
-                type: 'text',
+                type: 'text' as const,
                 text: `Index not created. An index named "${name}" already exists:
                     ${JSON.stringify(existingIndex, null, 2)}`,
               },
@@ -87,13 +103,13 @@ export function addCreateIndexForModelTool(server: McpServer, pc: Pinecone) {
         return {
           content: [
             {
-              type: 'text',
+              type: 'text' as const,
               text: JSON.stringify(indexInfo, null, 2),
             },
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text', text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
       }
     },
   );

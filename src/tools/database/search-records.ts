@@ -1,8 +1,21 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
+import {registerDatabaseTool} from './common/register-tool.js';
 import {SEARCH_QUERY_SCHEMA} from './common/search-query.js';
+
+type RerankModelType = 'bge-reranker-v2-m3' | 'pinecone-rerank-v0' | 'cohere-rerank-3.5';
+type SearchQuery = {
+  inputs: {text: string};
+  topK: number;
+  filter?: Record<string, unknown>;
+};
+type SearchRerank = {
+  model: RerankModelType;
+  topN?: number;
+  rankFields: string[];
+  query?: string;
+};
 
 const INSTRUCTIONS = 'Search an index for records that are similar to the query text';
 
@@ -45,24 +58,33 @@ const SCHEMA = {
   rerank: RERANK_SCHEMA,
 };
 
-export function addSearchRecordsTool(server: McpServer, pc: Pinecone) {
-  server.registerTool(
+type SearchArgs = {
+  name: string;
+  namespace: string;
+  query: SearchQuery;
+  rerank?: SearchRerank;
+};
+
+export function addSearchRecordsTool(server: McpServer) {
+  registerDatabaseTool(
+    server,
     'search-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
-    async ({name, namespace, query, rerank}) => {
+    async (args, pc) => {
+      const {name, namespace, query, rerank} = args as SearchArgs;
       try {
         const ns = pc.index(name).namespace(namespace);
         const results = await ns.searchRecords({query, rerank});
         return {
           content: [
             {
-              type: 'text',
+              type: 'text' as const,
               text: JSON.stringify(results, null, 2),
             },
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text', text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
       }
     },
   );

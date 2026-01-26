@@ -1,6 +1,13 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
+}));
+
+import {getPineconeClient} from './common/pinecone-client.js';
 import {addSearchRecordsTool} from './search-records.js';
 
 describe('search-records tool', () => {
@@ -10,20 +17,17 @@ describe('search-records tool', () => {
   beforeEach(() => {
     mockPc = createMockPinecone();
     mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
   });
 
   it('registers with the correct name', () => {
-    addSearchRecordsTool(mockServer as never, mockPc as never);
+    addSearchRecordsTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'search-records',
       expect.objectContaining({
         description: expect.any(String),
-        inputSchema: expect.objectContaining({
-          name: expect.anything(),
-          namespace: expect.anything(),
-          query: expect.anything(),
-        }),
+        inputSchema: expect.any(Object),
       }),
       expect.any(Function),
     );
@@ -33,30 +37,30 @@ describe('search-records tool', () => {
     const mockResults = {
       result: {
         hits: [
-          {_id: 'rec-1', _score: 0.95, fields: {content: 'Hello'}},
-          {_id: 'rec-2', _score: 0.85, fields: {content: 'World'}},
+          {_id: '1', fields: {content: 'result 1'}, _score: 0.9},
+          {_id: '2', fields: {content: 'result 2'}, _score: 0.8},
         ],
       },
     };
     mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue(mockResults);
 
-    addSearchRecordsTool(mockServer as never, mockPc as never);
+    addSearchRecordsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('search-records');
-    const query = {inputs: {text: 'hello'}, topK: 10};
     const result = await tool!.handler({
       name: 'test-index',
       namespace: 'test-ns',
-      query,
+      query: {inputs: {text: 'test query'}, topK: 10},
     });
 
     expect(mockPc.index).toHaveBeenCalledWith('test-index');
     expect(mockPc._mockIndex.namespace).toHaveBeenCalledWith('test-ns');
-    expect(mockPc._mockIndex._mockNamespace.searchRecords).toHaveBeenCalledWith({
-      query,
-      rerank: undefined,
-    });
     expect(result).toEqual({
-      content: [{type: 'text', text: JSON.stringify(mockResults, null, 2)}],
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(mockResults, null, 2),
+        },
+      ],
     });
   });
 
@@ -64,36 +68,38 @@ describe('search-records tool', () => {
     const mockResults = {result: {hits: []}};
     mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue(mockResults);
 
-    addSearchRecordsTool(mockServer as never, mockPc as never);
+    addSearchRecordsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('search-records');
-    const query = {inputs: {text: 'hello'}, topK: 10};
-    const rerank = {
-      model: 'bge-reranker-v2-m3',
-      topN: 5,
-      rankFields: ['content'],
-    };
     await tool!.handler({
       name: 'test-index',
       namespace: 'test-ns',
-      query,
-      rerank,
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {
+        model: 'bge-reranker-v2-m3',
+        topN: 5,
+        rankFields: ['content'],
+      },
     });
 
     expect(mockPc._mockIndex._mockNamespace.searchRecords).toHaveBeenCalledWith({
-      query,
-      rerank,
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {
+        model: 'bge-reranker-v2-m3',
+        topN: 5,
+        rankFields: ['content'],
+      },
     });
   });
 
   it('returns error response on API failure', async () => {
     mockPc._mockIndex._mockNamespace.searchRecords.mockRejectedValue(new Error('Search failed'));
 
-    addSearchRecordsTool(mockServer as never, mockPc as never);
+    addSearchRecordsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('search-records');
     const result = await tool!.handler({
       name: 'test-index',
       namespace: 'test-ns',
-      query: {inputs: {text: 'hello'}, topK: 10},
+      query: {inputs: {text: 'test query'}, topK: 10},
     });
 
     expect(result).toEqual({

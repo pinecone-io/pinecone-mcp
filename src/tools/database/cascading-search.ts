@@ -1,8 +1,15 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
+import {registerDatabaseTool} from './common/register-tool.js';
 import {SEARCH_QUERY_SCHEMA} from './common/search-query.js';
+
+type RerankModelType = 'bge-reranker-v2-m3' | 'pinecone-rerank-v0' | 'cohere-rerank-3.5';
+type SearchQuery = {
+  inputs: {text: string};
+  topK: number;
+  filter?: Record<string, unknown>;
+};
 
 const INSTRUCTIONS = `Search across multiple indexes for records that are
 similar to the query text, deduplicate and rerank the results.`;
@@ -50,14 +57,29 @@ export const SCHEMA = {
   rerank: RERANK_SCHEMA,
 };
 
-export function addCascadingSearchTool(server: McpServer, pc: Pinecone) {
-  server.registerTool(
+type IndexSpec = {name: string; namespace: string};
+type RerankSpec = {
+  model: RerankModelType;
+  topN?: number;
+  rankFields: string[];
+  query?: string;
+};
+type CascadingSearchArgs = {
+  indexes: IndexSpec[];
+  query: SearchQuery;
+  rerank: RerankSpec;
+};
+
+export function addCascadingSearchTool(server: McpServer) {
+  registerDatabaseTool(
+    server,
     'cascading-search',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
-    async ({indexes, query, rerank}) => {
+    async (args, pc) => {
+      const {indexes, query, rerank} = args as CascadingSearchArgs;
       try {
         const initialResults = await Promise.all(
-          indexes.map(async (index: {name: string; namespace: string}) => {
+          indexes.map(async (index: IndexSpec) => {
             const ns = pc.index(index.name).namespace(index.namespace || '');
             const results = await ns.searchRecords({query});
             return results;
@@ -90,13 +112,13 @@ export function addCascadingSearchTool(server: McpServer, pc: Pinecone) {
         return {
           content: [
             {
-              type: 'text',
+              type: 'text' as const,
               text: JSON.stringify(rerankedResults, null, 2),
             },
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text', text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
       }
     },
   );

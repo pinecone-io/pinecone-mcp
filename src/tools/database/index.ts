@@ -1,7 +1,5 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {Pinecone} from '@pinecone-database/pinecone';
 import {PINECONE_API_KEY} from '../../constants.js';
-import {PINECONE_MCP_VERSION} from '../../version.js';
 import {addCascadingSearchTool} from './cascading-search.js';
 import {addCreateIndexForModelTool} from './create-index-for-model.js';
 import {addDescribeIndexStatsTool} from './describe-index-stats.js';
@@ -17,17 +15,12 @@ export default function addDatabaseTools(server: McpServer) {
     return;
   }
 
-  const pc = new Pinecone({
-    apiKey: PINECONE_API_KEY,
-    sourceTag: `pinecone-mcp@${PINECONE_MCP_VERSION}`,
-  });
-
-  addListIndexesTool(server, pc);
-  addDescribeIndexTool(server, pc);
-  addDescribeIndexStatsTool(server, pc);
-  addCreateIndexForModelTool(server, pc);
-  addUpsertRecordsTool(server, pc);
-  addSearchRecordsTool(server, pc);
-  addRerankDocumentsTool(server, pc);
-  addCascadingSearchTool(server, pc);
+  addListIndexesTool(server);
+  addDescribeIndexTool(server);
+  addDescribeIndexStatsTool(server);
+  addCreateIndexForModelTool(server);
+  addUpsertRecordsTool(server);
+  addSearchRecordsTool(server);
+  addRerankDocumentsTool(server);
+  addCascadingSearchTool(server);
 }

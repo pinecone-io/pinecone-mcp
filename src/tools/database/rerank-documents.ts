@@ -1,7 +1,13 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {Pinecone} from '@pinecone-database/pinecone';
 import {z} from 'zod';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
+import {registerDatabaseTool} from './common/register-tool.js';
+
+type RerankModelType = 'bge-reranker-v2-m3' | 'pinecone-rerank-v0' | 'cohere-rerank-3.5';
+type RerankOptionsType = {
+  topN: number;
+  rankFields?: string[];
+};
 
 const INSTRUCTIONS = `Rerank a set of documents based on a query`;
 
@@ -37,18 +43,27 @@ export const SCHEMA = {
   options: RerankDocumentsOptions,
 };
 
-export function addRerankDocumentsTool(server: McpServer, pc: Pinecone) {
-  server.registerTool(
+type RerankArgs = {
+  model: RerankModelType;
+  query: string;
+  documents: string[] | Record<string, string>[];
+  options?: RerankOptionsType;
+};
+
+export function addRerankDocumentsTool(server: McpServer) {
+  registerDatabaseTool(
+    server,
     'rerank-documents',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
-    async ({model, query, documents, options}) => {
+    async (args, pc) => {
+      const {model, query, documents, options} = args as RerankArgs;
       try {
         const results = await pc.inference.rerank(model, query, documents, options);
         return {
-          content: [{type: 'text', text: JSON.stringify(results, null, 2)}],
+          content: [{type: 'text' as const, text: JSON.stringify(results, null, 2)}],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text', text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
       }
     },
   );

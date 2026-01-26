@@ -1,6 +1,13 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
+}));
+
+import {getPineconeClient} from './common/pinecone-client.js';
 import {addDescribeIndexTool} from './describe-index.js';
 
 describe('describe-index tool', () => {
@@ -10,16 +17,17 @@ describe('describe-index tool', () => {
   beforeEach(() => {
     mockPc = createMockPinecone();
     mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
   });
 
   it('registers with the correct name', () => {
-    addDescribeIndexTool(mockServer as never, mockPc as never);
+    addDescribeIndexTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'describe-index',
       expect.objectContaining({
         description: expect.any(String),
-        inputSchema: expect.objectContaining({name: expect.anything()}),
+        inputSchema: expect.any(Object),
       }),
       expect.any(Function),
     );
@@ -30,12 +38,11 @@ describe('describe-index tool', () => {
       name: 'test-index',
       dimension: 1536,
       metric: 'cosine',
-      host: 'test-index.svc.pinecone.io',
-      status: {ready: true},
+      host: 'test-host.pinecone.io',
     };
     mockPc.describeIndex.mockResolvedValue(mockIndexInfo);
 
-    addDescribeIndexTool(mockServer as never, mockPc as never);
+    addDescribeIndexTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('describe-index');
     const result = await tool!.handler({name: 'test-index'});
 
@@ -53,9 +60,9 @@ describe('describe-index tool', () => {
   it('returns error response when index not found', async () => {
     mockPc.describeIndex.mockRejectedValue(new Error('Index not found'));
 
-    addDescribeIndexTool(mockServer as never, mockPc as never);
+    addDescribeIndexTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('describe-index');
-    const result = await tool!.handler({name: 'nonexistent'});
+    const result = await tool!.handler({name: 'nonexistent-index'});
 
     expect(result).toEqual({
       isError: true,

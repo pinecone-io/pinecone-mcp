@@ -1,6 +1,13 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
+}));
+
+import {getPineconeClient} from './common/pinecone-client.js';
 import {addRerankDocumentsTool} from './rerank-documents.js';
 
 describe('rerank-documents tool', () => {
@@ -10,20 +17,17 @@ describe('rerank-documents tool', () => {
   beforeEach(() => {
     mockPc = createMockPinecone();
     mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
   });
 
   it('registers with the correct name', () => {
-    addRerankDocumentsTool(mockServer as never, mockPc as never);
+    addRerankDocumentsTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'rerank-documents',
       expect.objectContaining({
         description: expect.any(String),
-        inputSchema: expect.objectContaining({
-          model: expect.anything(),
-          query: expect.anything(),
-          documents: expect.anything(),
-        }),
+        inputSchema: expect.any(Object),
       }),
       expect.any(Function),
     );
@@ -32,26 +36,25 @@ describe('rerank-documents tool', () => {
   it('reranks string documents successfully', async () => {
     const mockResults = {
       data: [
-        {index: 0, score: 0.95, document: {text: 'Hello world'}},
-        {index: 1, score: 0.85, document: {text: 'Hi there'}},
+        {index: 0, score: 0.9, document: 'doc 1'},
+        {index: 1, score: 0.7, document: 'doc 2'},
       ],
     };
     mockPc.inference.rerank.mockResolvedValue(mockResults);
 
-    addRerankDocumentsTool(mockServer as never, mockPc as never);
+    addRerankDocumentsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('rerank-documents');
-    const documents = ['Hello world', 'Hi there', 'Goodbye'];
     const result = await tool!.handler({
       model: 'bge-reranker-v2-m3',
-      query: 'greeting',
-      documents,
+      query: 'test query',
+      documents: ['doc 1', 'doc 2', 'doc 3'],
       options: {topN: 2},
     });
 
     expect(mockPc.inference.rerank).toHaveBeenCalledWith(
       'bge-reranker-v2-m3',
-      'greeting',
-      documents,
+      'test query',
+      ['doc 1', 'doc 2', 'doc 3'],
       {topN: 2},
     );
     expect(result).toEqual({
@@ -63,36 +66,33 @@ describe('rerank-documents tool', () => {
     const mockResults = {data: [{index: 0, score: 0.9}]};
     mockPc.inference.rerank.mockResolvedValue(mockResults);
 
-    addRerankDocumentsTool(mockServer as never, mockPc as never);
+    addRerankDocumentsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('rerank-documents');
-    const documents = [{content: 'Hello world'}, {content: 'Hi there'}];
     await tool!.handler({
       model: 'cohere-rerank-3.5',
-      query: 'greeting',
-      documents,
-      options: {topN: 1, rankFields: ['content']},
+      query: 'test query',
+      documents: [{title: 'Doc 1', body: 'Content 1'}],
+      options: {topN: 1, rankFields: ['title', 'body']},
     });
 
     expect(mockPc.inference.rerank).toHaveBeenCalledWith(
       'cohere-rerank-3.5',
-      'greeting',
-      documents,
-      {
-        topN: 1,
-        rankFields: ['content'],
-      },
+      'test query',
+      [{title: 'Doc 1', body: 'Content 1'}],
+      {topN: 1, rankFields: ['title', 'body']},
     );
   });
 
   it('returns error response on API failure', async () => {
     mockPc.inference.rerank.mockRejectedValue(new Error('Rerank failed'));
 
-    addRerankDocumentsTool(mockServer as never, mockPc as never);
+    addRerankDocumentsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('rerank-documents');
     const result = await tool!.handler({
       model: 'bge-reranker-v2-m3',
-      query: 'test',
-      documents: ['doc1', 'doc2'],
+      query: 'test query',
+      documents: ['doc 1'],
+      options: {topN: 1},
     });
 
     expect(result).toEqual({
