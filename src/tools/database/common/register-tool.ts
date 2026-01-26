@@ -29,8 +29,8 @@ export function registerDatabaseTool<T extends ZodRawShape>(
 ) {
   const mergedSchema = {...config.inputSchema, ...LLM_CALLER_SCHEMA};
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   server.registerTool(name, {description: config.description, inputSchema: mergedSchema}, (async (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     allArgs: any,
   ) => {
     const {llm_provider, llm_model, ...toolArgs} = allArgs as Record<string, unknown> & {
