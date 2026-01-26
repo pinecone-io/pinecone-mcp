@@ -24,7 +24,15 @@ export function getPineconeClient(caller?: Caller): Pinecone {
   let client = clientCache.get(key);
   if (!client) {
     // Only include caller if model is provided (model is required by the SDK)
-    const callerConfig = caller?.model ? {caller: {provider: caller.provider, model: caller.model}} : {};
+    // Conditionally include provider only when it has a value to avoid {provider: undefined}
+    const callerConfig = caller?.model
+      ? {
+          caller: {
+            ...(caller.provider ? {provider: caller.provider} : {}),
+            model: caller.model,
+          },
+        }
+      : {};
 
     client = new Pinecone({
       apiKey: PINECONE_API_KEY,
