@@ -1,4 +1,5 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {formatError} from './common/format-error.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS = `List all Pinecone indexes`;
@@ -20,7 +21,7 @@ export function addListIndexesTool(server: McpServer) {
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
       }
     },
   );

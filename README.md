@@ -1,5 +1,9 @@
 # Pinecone Developer MCP Server
 
+[![npm version](https://img.shields.io/npm/v/@pinecone-database/mcp.svg)](https://www.npmjs.com/package/@pinecone-database/mcp)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/pinecone-io/pinecone-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/pinecone-io/pinecone-mcp/actions/workflows/ci.yml)
+
 The [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP) is a standard that allows coding assistants and other AI tools to interact with platforms like Pinecone. The Pinecone Developer MCP Server allows you to connect these tools with Pinecone projects and documentation.
 
 Once connected, AI tools can:
@@ -86,7 +90,18 @@ When you run `gemini` and press `ctrl+t`, `pinecone` should now be shown in the 
 
 ## Usage
 
-Once configured, your AI tool will automatically make use of the MCP to interact with Pinecone. You may be prompted for permission before a tool can be used. Try asking your AI assistant to set up an example index, upload sample data, or search for you!
+Once configured, your AI tool will automatically make use of the MCP to interact with Pinecone. You may be prompted for permission before a tool can be used.
+
+### Example prompts
+
+Here are some prompts you can try with your AI assistant:
+
+- "Search the Pinecone docs for information about metadata filtering"
+- "List all my Pinecone indexes and describe their configurations"
+- "Create a new index called 'my-docs' using the multilingual-e5-large model"
+- "Upsert these documents into my index: [paste your documents]"
+- "Search my index for records related to 'authentication best practices'"
+- "What namespaces exist in my index, and how many records are in each?"
 
 ### Tools
 
@@ -104,6 +119,31 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 ### Limitations
 
 Only indexes with integrated inference are supported. Assistants, indexes without integrated inference, standalone embeddings, and vector search are not supported.
+
+## Troubleshooting
+
+### MCP server not appearing in your AI tool
+
+- Ensure Node.js v18 or later is installed: `node --version`
+- Verify `npx` is available in your PATH: `which npx`
+- Check that your configuration file is in the correct location and has valid JSON syntax
+- Restart your AI tool after making configuration changes
+
+### "Invalid API key" or authentication errors
+
+- Verify your API key is correct in the [Pinecone console](https://app.pinecone.io)
+- Check that the `PINECONE_API_KEY` environment variable is set correctly in your MCP configuration
+- Ensure there are no extra spaces or quotes around the API key value
+
+### Tools not working as expected
+
+- The MCP server only supports indexes with integrated inference. If you're trying to use a serverless index without integrated inference, you'll need to create a new index with an embedding model
+- Check the MCP server logs for error messages. In Cursor, view logs in **Cursor Settings > MCP**
+
+### Connection issues
+
+- If using a corporate network, ensure your firewall allows connections to `api.pinecone.io`
+- Try running the server manually to see detailed error output: `PINECONE_API_KEY=<your-key> npx @pinecone-database/mcp`
 
 ## Contributing
 

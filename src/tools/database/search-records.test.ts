@@ -104,7 +104,7 @@ describe('search-records tool', () => {
 
     expect(result).toEqual({
       isError: true,
-      content: [{type: 'text', text: 'Error: Search failed'}],
+      content: [{type: 'text', text: 'Search failed'}],
     });
   });
 });

@@ -32,3 +32,6 @@ jobs:
 
       - name: Check formatting
         run: npx prettier --check 'src/**/*.ts' '*.json' '.prettierrc'
+
+      - name: Security audit
+        run: npm audit --audit-level=high
