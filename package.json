@@ -17,7 +17,10 @@
   },
   "private": false,
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/test-utils"
   ],
   "license": "Apache-2.0",
   "repository": {
