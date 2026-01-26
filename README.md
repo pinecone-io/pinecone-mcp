@@ -16,7 +16,7 @@ This MCP server is focused on improving the experience of developers working wit
 
 To configure the MCP server to access your Pinecone project, you will need to generate an API key using the [console](https://app.pinecone.io). Without an API key, your AI tool will still be able to search documentation. However, it will not be able to manage or query your indexes.
 
-The MCP server requires [Node.js](https://nodejs.org). Ensure that `node` and `npx` are available in your `PATH`.
+The MCP server requires [Node.js](https://nodejs.org) v18 or later. Ensure that `node` and `npx` are available in your `PATH`.
 
 Next, you will need to configure your AI assistant to use the MCP server.
 
