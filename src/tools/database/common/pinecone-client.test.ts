@@ -91,7 +91,10 @@ describe('pinecone-client', () => {
       const {getPineconeClient, clearClientCache} = await import('./pinecone-client.js');
       clearClientCache();
 
-      const client = getPineconeClient({provider: 'openai', model: 'gpt-4'}) as unknown as MockPineconeClient;
+      const client = getPineconeClient({
+        provider: 'openai',
+        model: 'gpt-4',
+      }) as unknown as MockPineconeClient;
 
       expect(client._config).toEqual({
         apiKey: 'test-api-key',
