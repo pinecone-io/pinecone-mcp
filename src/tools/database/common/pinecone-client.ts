@@ -10,8 +10,9 @@ export type Caller = {
 const clientCache = new Map<string, Pinecone>();
 
 function getCacheKey(caller?: Caller): string {
-  if (!caller?.provider && !caller?.model) return 'default';
-  return `${caller.provider || ''}:${caller.model || ''}`;
+  // Only create unique cache keys when model is present, since caller config requires model
+  if (!caller?.model) return 'default';
+  return `${caller.provider || ''}:${caller.model}`;
 }
 
 export function getPineconeClient(caller?: Caller): Pinecone {
