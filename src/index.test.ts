@@ -16,15 +16,14 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
 }));
 
 describe('index (main entry point)', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let consoleErrorSpy: any;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let processExitSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
   });
 
   afterEach(() => {
@@ -37,10 +36,8 @@ describe('index (main entry point)', () => {
     const {default: setupServer} = await import('./server.js');
     const {StdioServerTransport} = await import('@modelcontextprotocol/sdk/server/stdio.js');
 
-    // Import the module to trigger main()
     await import('./index.js');
 
-    // Wait for async operations
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(setupServer).toHaveBeenCalled();
@@ -52,16 +49,13 @@ describe('index (main entry point)', () => {
   it('logs error and exits with code 1 on failure', async () => {
     const testError = new Error('Test connection failure');
 
-    // Reset and re-mock with failing server
     vi.resetModules();
     vi.doMock('./server.js', () => ({
       default: vi.fn().mockRejectedValue(testError),
     }));
 
-    // Re-import to get fresh mocks
     await import('./index.js');
 
-    // Wait for async operations
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Fatal error in main():', testError);
