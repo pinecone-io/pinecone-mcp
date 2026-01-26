@@ -46,7 +46,9 @@ describe('upsert-records tool handler', () => {
 
     expect(mockPc.index).toHaveBeenCalledWith('test-index');
     expect(mockPc._mockIndex.namespace).toHaveBeenCalledWith('test-ns');
-    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([{id: '1', content: 'test content'}]);
+    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([
+      {id: '1', content: 'test content'},
+    ]);
     expect(result).toEqual({
       content: [{type: 'text', text: 'Data upserted successfully'}],
     });

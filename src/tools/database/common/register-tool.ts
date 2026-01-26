@@ -8,13 +8,13 @@ const LLM_CALLER_SCHEMA = {
     .string()
     .optional()
     .describe(
-      'Your provider name if you are an AI model (e.g., "anthropic", "openai", "google"). Used for usage analytics. Do not prompt the user for this.'
+      'Your provider name if you are an AI model (e.g., "anthropic", "openai", "google"). Used for usage analytics. Do not prompt the user for this.',
     ),
   llm_model: z
     .string()
     .optional()
     .describe(
-      'Your model name if you are an AI model (e.g., "claude-sonnet-4-20250514", "gpt-4o"). Used for usage analytics. Do not prompt the user for this.'
+      'Your model name if you are an AI model (e.g., "claude-sonnet-4-20250514", "gpt-4o"). Used for usage analytics. Do not prompt the user for this.',
     ),
 };
 
@@ -30,7 +30,9 @@ export function registerDatabaseTool<T extends ZodRawShape>(
   const mergedSchema = {...config.inputSchema, ...LLM_CALLER_SCHEMA};
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  server.registerTool(name, {description: config.description, inputSchema: mergedSchema}, (async (allArgs: any) => {
+  server.registerTool(name, {description: config.description, inputSchema: mergedSchema}, (async (
+    allArgs: any,
+  ) => {
     const {llm_provider, llm_model, ...toolArgs} = allArgs as Record<string, unknown> & {
       llm_provider?: string;
       llm_model?: string;
