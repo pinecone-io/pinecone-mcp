@@ -7,11 +7,15 @@ const LLM_CALLER_SCHEMA = {
   llm_provider: z
     .string()
     .optional()
-    .describe('Optional: The LLM provider (e.g., "anthropic", "google", "openai")'),
+    .describe(
+      'Your provider name if you are an AI model (e.g., "anthropic", "openai", "google"). Used for usage analytics. Do not prompt the user for this.'
+    ),
   llm_model: z
     .string()
     .optional()
-    .describe('Optional: The LLM model (e.g., "claude-sonnet-4-20250514", "gemini-2.0-flash")'),
+    .describe(
+      'Your model name if you are an AI model (e.g., "claude-sonnet-4-20250514", "gpt-4o"). Used for usage analytics. Do not prompt the user for this.'
+    ),
 };
 
 type TextContent = {type: 'text'; text: string};
