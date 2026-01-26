@@ -22,26 +22,27 @@ export function getPineconeClient(caller?: Caller): Pinecone {
 
   const key = getCacheKey(caller);
 
-  let client = clientCache.get(key);
-  if (!client) {
-    // Only include caller if model is provided (model is required by the SDK)
-    // Conditionally include provider only when it has a value to avoid {provider: undefined}
-    const callerConfig = caller?.model
-      ? {
-          caller: {
-            ...(caller.provider ? {provider: caller.provider} : {}),
-            model: caller.model,
-          },
-        }
-      : {};
+  const cached = clientCache.get(key);
+  if (cached) return cached;
 
-    client = new Pinecone({
-      apiKey: PINECONE_API_KEY,
-      sourceTag: `pinecone-mcp@${PINECONE_MCP_VERSION}`,
-      ...callerConfig,
-    });
-    clientCache.set(key, client);
+  const config: {
+    apiKey: string;
+    sourceTag: string;
+    caller?: {model: string; provider?: string};
+  } = {
+    apiKey: PINECONE_API_KEY,
+    sourceTag: `pinecone-mcp@${PINECONE_MCP_VERSION}`,
+  };
+
+  if (caller?.model) {
+    config.caller = {model: caller.model};
+    if (caller.provider) {
+      config.caller.provider = caller.provider;
+    }
   }
+
+  const client = new Pinecone(config);
+  clientCache.set(key, client);
   return client;
 }
 
