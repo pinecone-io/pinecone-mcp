@@ -67,7 +67,7 @@ describe('upsert-records tool handler', () => {
 
     expect(result).toEqual({
       isError: true,
-      content: [{type: 'text', text: 'Error: API error'}],
+      content: [{type: 'text', text: 'API error'}],
     });
   });
 

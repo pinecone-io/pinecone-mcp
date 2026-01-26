@@ -66,7 +66,7 @@ describe('describe-index tool', () => {
 
     expect(result).toEqual({
       isError: true,
-      content: [{type: 'text', text: 'Error: Index not found'}],
+      content: [{type: 'text', text: 'Index not found'}],
     });
   });
 });

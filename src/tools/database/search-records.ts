@@ -1,5 +1,6 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
+import {formatError} from './common/format-error.js';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 import {SEARCH_QUERY_SCHEMA} from './common/search-query.js';
@@ -84,7 +85,7 @@ export function addSearchRecordsTool(server: McpServer) {
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
       }
     },
   );
