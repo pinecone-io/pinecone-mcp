@@ -17,7 +17,8 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
 
 describe('index (main entry point)', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-  let processExitSpy: ReturnType<typeof vi.spyOn>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let processExitSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
