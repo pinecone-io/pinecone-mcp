@@ -17,17 +17,16 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
 
 describe('index (main entry point)', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-  let processExitSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
   });
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
-    processExitSpy.mockRestore();
+    vi.mocked(process.exit).mockRestore();
     vi.resetModules();
   });
 
@@ -58,6 +57,6 @@ describe('index (main entry point)', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Fatal error in main():', testError);
-    expect(processExitSpy).toHaveBeenCalledWith(1);
+    expect(vi.mocked(process.exit)).toHaveBeenCalledWith(1);
   });
 });

@@ -1,5 +1,10 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 
+// Type for the mocked Pinecone client
+interface MockPineconeClient {
+  _config: Record<string, unknown>;
+}
+
 // Mock the Pinecone client
 vi.mock('@pinecone-database/pinecone', () => ({
   Pinecone: vi.fn().mockImplementation((config) => ({
@@ -43,7 +48,7 @@ describe('pinecone-client', () => {
       const {getPineconeClient, clearClientCache} = await import('./pinecone-client.js');
       clearClientCache();
 
-      const client = getPineconeClient();
+      const client = getPineconeClient() as unknown as MockPineconeClient;
 
       expect(client).toBeDefined();
       expect(client._config).toEqual({
@@ -86,7 +91,7 @@ describe('pinecone-client', () => {
       const {getPineconeClient, clearClientCache} = await import('./pinecone-client.js');
       clearClientCache();
 
-      const client = getPineconeClient({provider: 'openai', model: 'gpt-4'});
+      const client = getPineconeClient({provider: 'openai', model: 'gpt-4'}) as unknown as MockPineconeClient;
 
       expect(client._config).toEqual({
         apiKey: 'test-api-key',
@@ -99,7 +104,7 @@ describe('pinecone-client', () => {
       const {getPineconeClient, clearClientCache} = await import('./pinecone-client.js');
       clearClientCache();
 
-      const client = getPineconeClient({model: 'gpt-4'});
+      const client = getPineconeClient({model: 'gpt-4'}) as unknown as MockPineconeClient;
 
       expect(client._config).toEqual({
         apiKey: 'test-api-key',
