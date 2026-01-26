@@ -1,6 +1,13 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
+}));
+
+import {getPineconeClient} from './common/pinecone-client.js';
 import {addListIndexesTool} from './list-indexes.js';
 
 describe('list-indexes tool', () => {
@@ -10,10 +17,11 @@ describe('list-indexes tool', () => {
   beforeEach(() => {
     mockPc = createMockPinecone();
     mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
   });
 
   it('registers with the correct name', () => {
-    addListIndexesTool(mockServer as never, mockPc as never);
+    addListIndexesTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'list-indexes',
@@ -34,7 +42,7 @@ describe('list-indexes tool', () => {
     };
     mockPc.listIndexes.mockResolvedValue(mockIndexes);
 
-    addListIndexesTool(mockServer as never, mockPc as never);
+    addListIndexesTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('list-indexes');
     const result = await tool!.handler({});
 
@@ -52,7 +60,7 @@ describe('list-indexes tool', () => {
   it('returns error response on API failure', async () => {
     mockPc.listIndexes.mockRejectedValue(new Error('API error'));
 
-    addListIndexesTool(mockServer as never, mockPc as never);
+    addListIndexesTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('list-indexes');
     const result = await tool!.handler({});
 
@@ -65,7 +73,7 @@ describe('list-indexes tool', () => {
   it('handles empty index list', async () => {
     mockPc.listIndexes.mockResolvedValue({indexes: []});
 
-    addListIndexesTool(mockServer as never, mockPc as never);
+    addListIndexesTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('list-indexes');
     const result = await tool!.handler({});
 

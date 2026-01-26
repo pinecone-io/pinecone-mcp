@@ -1,6 +1,7 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {Pinecone} from '@pinecone-database/pinecone';
+import {IntegratedRecord} from '@pinecone-database/pinecone';
 import {z} from 'zod';
+import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS = 'Insert or update records in a Pinecone index';
 
@@ -35,19 +36,27 @@ const SCHEMA = {
   records: RECORD_SET_SCHEMA,
 };
 
-export function addUpsertRecordsTool(server: McpServer, pc: Pinecone) {
-  server.registerTool(
+type UpsertArgs = {
+  name: string;
+  namespace: string;
+  records: IntegratedRecord[];
+};
+
+export function addUpsertRecordsTool(server: McpServer) {
+  registerDatabaseTool(
+    server,
     'upsert-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
-    async ({name, namespace, records}) => {
+    async (args, pc) => {
+      const {name, namespace, records} = args as UpsertArgs;
       try {
         const ns = pc.index(name).namespace(namespace);
         await ns.upsertRecords(records);
         return {
-          content: [{type: 'text', text: 'Data upserted successfully'}],
+          content: [{type: 'text' as const, text: 'Data upserted successfully'}],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text', text: String(e)}]};
+        return {isError: true, content: [{type: 'text' as const, text: String(e)}]};
       }
     },
   );

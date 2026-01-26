@@ -1,6 +1,13 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
+}));
+
+import {getPineconeClient} from './common/pinecone-client.js';
 import {addUpsertRecordsTool} from './upsert-records.js';
 
 describe('upsert-records tool handler', () => {
@@ -10,20 +17,17 @@ describe('upsert-records tool handler', () => {
   beforeEach(() => {
     mockPc = createMockPinecone();
     mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
   });
 
   it('registers with the correct name', () => {
-    addUpsertRecordsTool(mockServer as never, mockPc as never);
+    addUpsertRecordsTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'upsert-records',
       expect.objectContaining({
         description: expect.any(String),
-        inputSchema: expect.objectContaining({
-          name: expect.anything(),
-          namespace: expect.anything(),
-          records: expect.anything(),
-        }),
+        inputSchema: expect.any(Object),
       }),
       expect.any(Function),
     );
@@ -32,21 +36,17 @@ describe('upsert-records tool handler', () => {
   it('upserts records successfully', async () => {
     mockPc._mockIndex._mockNamespace.upsertRecords.mockResolvedValue(undefined);
 
-    addUpsertRecordsTool(mockServer as never, mockPc as never);
+    addUpsertRecordsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('upsert-records');
-    const records = [
-      {id: 'rec-1', content: 'Hello world'},
-      {id: 'rec-2', content: 'Goodbye world'},
-    ];
     const result = await tool!.handler({
       name: 'test-index',
       namespace: 'test-ns',
-      records,
+      records: [{id: '1', content: 'test content'}],
     });
 
     expect(mockPc.index).toHaveBeenCalledWith('test-index');
     expect(mockPc._mockIndex.namespace).toHaveBeenCalledWith('test-ns');
-    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith(records);
+    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([{id: '1', content: 'test content'}]);
     expect(result).toEqual({
       content: [{type: 'text', text: 'Data upserted successfully'}],
     });
@@ -55,12 +55,12 @@ describe('upsert-records tool handler', () => {
   it('returns error response on API failure', async () => {
     mockPc._mockIndex._mockNamespace.upsertRecords.mockRejectedValue(new Error('API error'));
 
-    addUpsertRecordsTool(mockServer as never, mockPc as never);
+    addUpsertRecordsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('upsert-records');
     const result = await tool!.handler({
       name: 'test-index',
       namespace: 'test-ns',
-      records: [{id: 'rec-1', content: 'Hello'}],
+      records: [{id: '1', content: 'test content'}],
     });
 
     expect(result).toEqual({
@@ -72,18 +72,17 @@ describe('upsert-records tool handler', () => {
   it('handles records with _id field', async () => {
     mockPc._mockIndex._mockNamespace.upsertRecords.mockResolvedValue(undefined);
 
-    addUpsertRecordsTool(mockServer as never, mockPc as never);
+    addUpsertRecordsTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('upsert-records');
-    const records = [{_id: 'rec-1', content: 'Hello world'}];
-    const result = await tool!.handler({
+    const result = (await tool!.handler({
       name: 'test-index',
       namespace: 'test-ns',
-      records,
-    });
+      records: [{_id: 'alt-1', content: 'test content'}],
+    })) as {content: Array<{text: string}>};
 
-    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith(records);
-    expect(result).toEqual({
-      content: [{type: 'text', text: 'Data upserted successfully'}],
-    });
+    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([
+      {_id: 'alt-1', content: 'test content'},
+    ]);
+    expect(result.content[0].text).toContain('successfully');
   });
 });

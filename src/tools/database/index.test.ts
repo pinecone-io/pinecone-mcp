@@ -1,21 +1,9 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
 
-// Mock the Pinecone client
-vi.mock('@pinecone-database/pinecone', () => ({
-  Pinecone: vi.fn().mockImplementation(() => ({
-    listIndexes: vi.fn(),
-    describeIndex: vi.fn(),
-    createIndexForModel: vi.fn(),
-    index: vi.fn(() => ({
-      describeIndexStats: vi.fn(),
-      namespace: vi.fn(() => ({
-        searchRecords: vi.fn(),
-        upsertRecords: vi.fn(),
-      })),
-    })),
-    inference: {rerank: vi.fn()},
-  })),
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
 }));
 
 describe('addDatabaseTools', () => {
@@ -62,17 +50,18 @@ describe('addDatabaseTools', () => {
     consoleSpy.mockRestore();
   });
 
-  it('creates Pinecone client with correct source tag', async () => {
+  it('tools include llm_provider and llm_model in their schemas', async () => {
     vi.stubEnv('PINECONE_API_KEY', 'test-api-key');
 
-    const {Pinecone} = await import('@pinecone-database/pinecone');
     const {default: addDatabaseTools} = await import('./index.js');
-
     addDatabaseTools(mockServer as never);
 
-    expect(Pinecone).toHaveBeenCalledWith({
-      apiKey: 'test-api-key',
-      sourceTag: expect.stringMatching(/^pinecone-mcp@/),
-    });
+    // Check that all tools have the LLM caller schema fields
+    const registeredTools = mockServer.getRegisteredToolNames();
+    for (const toolName of registeredTools) {
+      const tool = mockServer.getRegisteredTool(toolName);
+      expect(tool?.schema).toHaveProperty('llm_provider');
+      expect(tool?.schema).toHaveProperty('llm_model');
+    }
   });
 });

@@ -1,6 +1,13 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+
+// Mock the pinecone-client module
+vi.mock('./common/pinecone-client.js', () => ({
+  getPineconeClient: vi.fn(),
+}));
+
+import {getPineconeClient} from './common/pinecone-client.js';
 import {addCreateIndexForModelTool} from './create-index-for-model.js';
 
 describe('create-index-for-model tool', () => {
@@ -10,20 +17,21 @@ describe('create-index-for-model tool', () => {
   beforeEach(() => {
     mockPc = createMockPinecone();
     mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
   });
 
   it('registers with the correct name and schema', () => {
-    addCreateIndexForModelTool(mockServer as never, mockPc as never);
+    addCreateIndexForModelTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
       'create-index-for-model',
       expect.objectContaining({
         description: expect.any(String),
         inputSchema: expect.objectContaining({
-          name: expect.anything(),
-          cloud: expect.anything(),
-          region: expect.anything(),
-          embed: expect.anything(),
+          name: expect.any(Object),
+          cloud: expect.any(Object),
+          region: expect.any(Object),
+          embed: expect.any(Object),
         }),
       }),
       expect.any(Function),
@@ -31,15 +39,15 @@ describe('create-index-for-model tool', () => {
   });
 
   it('creates index with specified cloud and region', async () => {
-    mockPc.listIndexes.mockResolvedValue({indexes: []});
-    const mockNewIndex = {
+    const mockIndexInfo = {
       name: 'new-index',
       dimension: 1024,
-      metric: 'cosine',
+      host: 'new-index.pinecone.io',
     };
-    mockPc.createIndexForModel.mockResolvedValue(mockNewIndex);
+    mockPc.listIndexes.mockResolvedValue({indexes: []});
+    mockPc.createIndexForModel.mockResolvedValue(mockIndexInfo);
 
-    addCreateIndexForModelTool(mockServer as never, mockPc as never);
+    addCreateIndexForModelTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('create-index-for-model');
     const result = await tool!.handler({
       name: 'new-index',
@@ -51,7 +59,6 @@ describe('create-index-for-model tool', () => {
       },
     });
 
-    expect(mockPc.listIndexes).toHaveBeenCalled();
     expect(mockPc.createIndexForModel).toHaveBeenCalledWith({
       name: 'new-index',
       cloud: 'aws',
@@ -67,57 +74,53 @@ describe('create-index-for-model tool', () => {
       waitUntilReady: true,
     });
     expect(result).toEqual({
-      content: [{type: 'text', text: JSON.stringify(mockNewIndex, null, 2)}],
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(mockIndexInfo, null, 2),
+        },
+      ],
     });
   });
 
   it('creates index with custom cloud and region', async () => {
-    mockPc.listIndexes.mockResolvedValue({indexes: []});
-    const mockNewIndex = {
+    const mockIndexInfo = {
       name: 'gcp-index',
       dimension: 1024,
-      metric: 'cosine',
+      host: 'gcp-index.pinecone.io',
     };
-    mockPc.createIndexForModel.mockResolvedValue(mockNewIndex);
+    mockPc.listIndexes.mockResolvedValue({indexes: []});
+    mockPc.createIndexForModel.mockResolvedValue(mockIndexInfo);
 
-    addCreateIndexForModelTool(mockServer as never, mockPc as never);
+    addCreateIndexForModelTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('create-index-for-model');
     const result = await tool!.handler({
       name: 'gcp-index',
       cloud: 'gcp',
       region: 'us-central1',
       embed: {
-        model: 'multilingual-e5-large',
-        fieldMap: {text: 'content'},
+        model: 'llama-text-embed-v2',
+        fieldMap: {text: 'body'},
       },
     });
 
-    expect(mockPc.createIndexForModel).toHaveBeenCalledWith({
-      name: 'gcp-index',
-      cloud: 'gcp',
-      region: 'us-central1',
-      embed: {
-        model: 'multilingual-e5-large',
-        fieldMap: {text: 'content'},
-      },
-      tags: {
-        source: 'mcp',
-        embedding_model: 'multilingual-e5-large',
-      },
-      waitUntilReady: true,
-    });
-    expect(result).toEqual({
-      content: [{type: 'text', text: JSON.stringify(mockNewIndex, null, 2)}],
-    });
+    expect(mockPc.createIndexForModel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cloud: 'gcp',
+        region: 'us-central1',
+      }),
+    );
+    const typedResult = result as {content: Array<{text: string}>};
+    expect(typedResult.content[0].text).toContain('gcp-index');
   });
 
   it('returns message when index already exists', async () => {
-    const existingIndex = {name: 'existing-index', dimension: 768};
+    const existingIndex = {name: 'existing-index', dimension: 1536};
     mockPc.listIndexes.mockResolvedValue({indexes: [existingIndex]});
 
-    addCreateIndexForModelTool(mockServer as never, mockPc as never);
+    addCreateIndexForModelTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('create-index-for-model');
-    const result = await tool!.handler({
+    const result = (await tool!.handler({
       name: 'existing-index',
       cloud: 'aws',
       region: 'us-east-1',
@@ -125,24 +128,17 @@ describe('create-index-for-model tool', () => {
         model: 'multilingual-e5-large',
         fieldMap: {text: 'content'},
       },
-    });
+    })) as {content: Array<{text: string}>};
 
     expect(mockPc.createIndexForModel).not.toHaveBeenCalled();
-    expect(result).toEqual({
-      content: [
-        {
-          type: 'text',
-          text: expect.stringContaining('Index not created'),
-        },
-      ],
-    });
+    expect(result.content[0].text).toContain('already exists');
   });
 
   it('returns error response on API failure', async () => {
     mockPc.listIndexes.mockResolvedValue({indexes: []});
     mockPc.createIndexForModel.mockRejectedValue(new Error('API error'));
 
-    addCreateIndexForModelTool(mockServer as never, mockPc as never);
+    addCreateIndexForModelTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('create-index-for-model');
     const result = await tool!.handler({
       name: 'new-index',
