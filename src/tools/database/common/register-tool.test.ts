@@ -67,7 +67,6 @@ describe('registerDatabaseTool', () => {
       handler,
     );
 
-    // Get the registered handler and call it
     const registeredHandler = mockServer.registerTool.mock.calls[0][2];
     await registeredHandler({
       indexName: 'my-index',
