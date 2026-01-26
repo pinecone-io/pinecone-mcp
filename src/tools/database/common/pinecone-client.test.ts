@@ -5,12 +5,21 @@ interface MockPineconeClient {
   _config: Record<string, unknown>;
 }
 
-// Mock the Pinecone client
-vi.mock('@pinecone-database/pinecone', () => ({
-  Pinecone: vi.fn().mockImplementation((config) => ({
-    _config: config,
-  })),
-}));
+// Track mock instances for vitest 4.x compatibility
+let mockInstanceCount = 0;
+
+// Mock the Pinecone client using class syntax for vitest 4.x compatibility
+vi.mock('@pinecone-database/pinecone', () => {
+  return {
+    Pinecone: class MockPinecone {
+      _config: unknown;
+      constructor(config: unknown) {
+        this._config = config;
+        mockInstanceCount++;
+      }
+    },
+  };
+});
 
 // Mock constants - we'll control PINECONE_API_KEY via stubEnv
 vi.mock('../../../constants.js', () => ({
@@ -28,6 +37,7 @@ describe('pinecone-client', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv('PINECONE_API_KEY', 'test-api-key');
+    mockInstanceCount = 0;
   });
 
   afterEach(() => {
@@ -119,16 +129,15 @@ describe('pinecone-client', () => {
 
   describe('clearClientCache', () => {
     it('clears the client cache', async () => {
-      const {Pinecone} = await import('@pinecone-database/pinecone');
       const {getPineconeClient, clearClientCache} = await import('./pinecone-client.js');
       clearClientCache();
 
       getPineconeClient();
-      expect(Pinecone).toHaveBeenCalledTimes(1);
+      expect(mockInstanceCount).toBe(1);
 
       clearClientCache();
       getPineconeClient();
-      expect(Pinecone).toHaveBeenCalledTimes(2);
+      expect(mockInstanceCount).toBe(2);
     });
   });
 });
