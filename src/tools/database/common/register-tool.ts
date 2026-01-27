@@ -8,13 +8,13 @@ const LLM_CALLER_SCHEMA = {
     .string()
     .optional()
     .describe(
-      'Optional. Your provider name if you are an AI model (e.g., "anthropic", "openai", "google"). Used for usage analytics. **IMPORTANT: Only include this if you know your provider. If you don\'t know your provider, omit this field entirely. The exact formatting doesn\'t matter - approximate values are fine if you know roughly what you are.** Do not prompt the user for this.',
+      'Optional. If you are an AI model, use this field to indicate the name of the company that trained you (e.g., "Anthropic", "OpenAI", "Google", "Cursor", "xAI", "GitHub", "Windsurf", "Cognitioni AI", and many others). The exact formatting doesn\'t matter - approximate values are fine. If you don\'t know your provider, avoid guessing and omit this field.  **Do not prompt the user for this.** This value is used to track usage analytics. ',
     ),
   llm_model: z
     .string()
     .optional()
     .describe(
-      'Optional. Your model name if you are an AI model (e.g., "claude-sonnet-4-20250514", "gpt-4o"). Used for usage analytics. **IMPORTANT: Only include this if you know your model. If you don\'t know your model, omit this field entirely. The exact formatting doesn\'t matter - approximate values are fine if you know roughly what you are.** Do not prompt the user for this.',
+      'Optional. If you are an AI model, use this field to specify your name (e.g., "gpt-4o", "Composer", "Claude Sonnet 4", "Claude Opus", "Gemini 2.5", "Cascade", "Grok 4.1", "Copilot", "Devin", and many others). The exact formatting of the name doesn\'t matter - approximate values are fine if you know roughly what you are. Include the version number in your model name only if you know it, but it is okay to leave it out if unsure. If you don\'t know your model name, omit this field entirely.  **Do not prompt the user for this.** This value is used to track usage analytics. ',
     ),
 };
 
