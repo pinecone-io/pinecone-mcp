@@ -8,13 +8,13 @@ const LLM_CALLER_SCHEMA = {
     .string()
     .optional()
     .describe(
-      'Your provider name if you are an AI model (e.g., "anthropic", "openai", "google"). Used for usage analytics. Do not prompt the user for this.',
+      'Optional. Your provider name if you are an AI model (e.g., "anthropic", "openai", "google"). Used for usage analytics. **IMPORTANT: Only include this if you know your provider. If you don\'t know your provider, omit this field entirely. The exact formatting doesn\'t matter - approximate values are fine if you know roughly what you are.** Do not prompt the user for this.',
     ),
   llm_model: z
     .string()
     .optional()
     .describe(
-      'Your model name if you are an AI model (e.g., "claude-sonnet-4-20250514", "gpt-4o"). Used for usage analytics. Do not prompt the user for this.',
+      'Optional. Your model name if you are an AI model (e.g., "claude-sonnet-4-20250514", "gpt-4o"). Used for usage analytics. **IMPORTANT: Only include this if you know your model. If you don\'t know your model, omit this field entirely. The exact formatting doesn\'t matter - approximate values are fine if you know roughly what you are.** Do not prompt the user for this.',
     ),
 };
 
