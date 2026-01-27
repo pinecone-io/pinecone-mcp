@@ -28,7 +28,7 @@ Next, you will need to configure your AI assistant to use the MCP server.
 
 To add the Pinecone MCP server to a project, create a `.cursor/mcp.json` file in the project root (if it doesn't already exist) and add the following configuration:
 
-```
+```json
 {
   "mcpServers": {
     "pinecone": {
@@ -54,7 +54,7 @@ It is recommended to use rules to instruct Cursor on proper usage of the MCP ser
 
 Use Claude desktop to locate the `claude_desktop_config.json` file by navigating to **Settings > Developer > Edit Config**. Add the following configuration:
 
-```
+```json
 {
   "mcpServers": {
     "pinecone": {
@@ -76,13 +76,13 @@ Restart Claude desktop. On the new chat screen, you should see a hammer (MCP) ic
 
 To install this as a [Gemini CLI](https://github.com/google-gemini/gemini-cli) extension, run the following command:
 
-```
+```bash
 gemini extensions install https://github.com/pinecone-io/pinecone-mcp
 ```
 
 You will need to provide your Pinecone API key in the `PINECONE_API_KEY` environment variable.
 
-```
+```bash
 export PINECONE_API_KEY=<your pinecone api key>
 ```
 
