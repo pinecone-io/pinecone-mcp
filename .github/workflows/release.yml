@@ -122,6 +122,8 @@ jobs:
       - name: Create draft release with notes (prod)
         if: github.event.inputs.releaseMode == 'prod'
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "v${{ steps.version-bump-prod.outputs.version }}" \
             --draft \
