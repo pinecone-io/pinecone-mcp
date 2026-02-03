@@ -250,7 +250,6 @@ Check current pricing at [pinecone.io/pricing](https://www.pinecone.io/pricing)
 ## Next Steps
 
 - [Cascading Search](../advanced/cascading-search.md) - Search and rerank across multiple indexes
-- [Analytics Tracking](../advanced/analytics-tracking.md) - Monitor reranking usage and effectiveness
 - [Error Handling](../advanced/error-handling.md) - Handle reranking failures gracefully
 
 ## Related Documentation

@@ -677,7 +677,6 @@ user_message = "We're having trouble connecting to the search service. Please tr
 
 ## Next Steps
 
-- [Analytics Tracking](./analytics-tracking.md) - Monitor error rates and patterns
 - [Cascading Search](./cascading-search.md) - Handle errors across multiple indexes
 - [Integration Workflows](../integrations/) - Implement error handling in your environment
 

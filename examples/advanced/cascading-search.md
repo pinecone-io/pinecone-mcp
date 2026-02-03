@@ -425,7 +425,6 @@ Track metrics across indexes:
 
 ## Next Steps
 
-- [Analytics Tracking](./analytics-tracking.md) - Monitor cascading search usage and effectiveness
 - [Error Handling](./error-handling.md) - Handle failures gracefully across multiple indexes
 - [Integration Workflows](../integrations/) - Implement cascading search in your development environment
 

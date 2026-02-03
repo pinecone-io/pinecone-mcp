@@ -232,7 +232,6 @@ List all my Pinecone indexes
 
 - [Using Reranking](./reranking.md) - Improve search result relevance
 - [Cascading Search](../advanced/cascading-search.md) - Search across multiple indexes
-- [Analytics Tracking](../advanced/analytics-tracking.md) - Track model usage
 
 ## Related Documentation
 
