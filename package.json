@@ -1,6 +1,6 @@
 {
   "name": "@pinecone-database/mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Model Context Protocol server for Pinecone - enables AI assistants to interact with Pinecone indexes and documentation",
   "type": "module",
   "main": "dist/index.js",
