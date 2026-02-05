@@ -123,7 +123,7 @@ jobs:
         if: github.event.inputs.releaseMode == 'prod'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v${{ steps.version-bump-prod.outputs.version }}" \
             --draft \
