@@ -6,5 +6,12 @@
       "command": "npx",
       "args": ["-y", "@pinecone-database/mcp"]
     }
-  }
+  },
+  "settings": [
+    {
+      "name": "Pinecone API Key",
+      "description": "Pinecone API Key",
+      "envVar": "PINECONE_API_KEY"
+    }
+  ]
 }
