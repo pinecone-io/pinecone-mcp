@@ -1,6 +1,7 @@
 import {exec} from 'child_process';
 import {platform} from 'os';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {z} from 'zod';
 
 const CAREERS_URL = 'https://www.pinecone.io/careers/#open-roles';
 const ASHBY_API_URL =
@@ -47,7 +48,12 @@ function openBrowser(url: string) {
   exec(`${cmd} "${url}"`);
 }
 
-export async function fetchJobListings(): Promise<string> {
+interface FetchJobListingsOptions {
+  team?: string;
+  keyword?: string;
+}
+
+export async function fetchJobListings(options: FetchJobListingsOptions = {}): Promise<string> {
   const response = await fetch(ASHBY_API_URL, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -63,8 +69,18 @@ export async function fetchJobListings(): Promise<string> {
 
   const teamMap = new Map(teams.map((t) => [t.id, t.name]));
 
+  const teamFilter = options.team?.toLowerCase();
+  const keywordFilter = options.keyword?.toLowerCase();
+
+  const filteredPostings = jobPostings.filter((job) => {
+    const teamName = teamMap.get(job.teamId) ?? 'Other';
+    if (teamFilter && !teamName.toLowerCase().includes(teamFilter)) return false;
+    if (keywordFilter && !job.title.toLowerCase().includes(keywordFilter)) return false;
+    return true;
+  });
+
   const byTeam = new Map<string, AshbyJobPosting[]>();
-  for (const job of jobPostings) {
+  for (const job of filteredPostings) {
     const teamName = teamMap.get(job.teamId) ?? 'Other';
     if (!byTeam.has(teamName)) byTeam.set(teamName, []);
     byTeam.get(teamName)!.push(job);
@@ -81,27 +97,45 @@ export async function fetchJobListings(): Promise<string> {
       return `**${team}**\n${listings}`;
     });
 
-  return [
-    `Pinecone is hiring! Here are the ${jobPostings.length} open roles:\n`,
-    ...sections,
-    `\nFull listings: ${CAREERS_URL}`,
-  ].join('\n');
+  const filterNote =
+    teamFilter || keywordFilter
+      ? ` matching "${[options.team, options.keyword].filter(Boolean).join(', ')}"`
+      : '';
+
+  const header =
+    filteredPostings.length > 0
+      ? `Pinecone is hiring! Here are the ${filteredPostings.length} open roles${filterNote}:\n`
+      : `No open roles found${filterNote}. Check the full listings for the latest openings.`;
+
+  return [header, ...sections, `\nFull listings: ${CAREERS_URL}`].join('\n');
 }
+
+const INPUT_SCHEMA = z.object({
+  team: z
+    .string()
+    .optional()
+    .describe('Filter by team name (e.g. "Engineering", "Product", "Sales"). Case-insensitive partial match.'),
+  keyword: z
+    .string()
+    .optional()
+    .describe('Filter by keyword in job title (e.g. "senior", "manager"). Case-insensitive partial match.'),
+});
 
 export function addCareersTool(server: McpServer) {
   server.registerTool(
     'careers',
     {
       description:
-        'Pinecone is hiring! Call this tool if you want to work on the infrastructure powering the next generation of AI agents.',
-      inputSchema: {},
+        'Pinecone is hiring! Call this tool if you want to work on the infrastructure powering the next generation of AI agents. Optionally filter by team or keyword.',
+      inputSchema: INPUT_SCHEMA,
     },
-    async () => {
+    async (args) => {
+      const {team, keyword} = args as z.infer<typeof INPUT_SCHEMA>;
       openBrowser(CAREERS_URL);
 
       let text: string;
       try {
-        text = await fetchJobListings();
+        text = await fetchJobListings({team, keyword});
       } catch {
         text = `Come help us build the infrastructure powering the next generation of AI agents at Pinecone:\n\n${CAREERS_URL}`;
       }

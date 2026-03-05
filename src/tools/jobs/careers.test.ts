@@ -61,11 +61,13 @@ describe('careers tool', () => {
   });
 
   describe('fetchJobListings', () => {
-    it('groups jobs by team and formats listings', async () => {
+    beforeEach(() => {
       vi.mocked(fetch).mockResolvedValue({
         json: () => Promise.resolve(mockAshbyResponse),
       } as Response);
+    });
 
+    it('groups jobs by team and formats listings', async () => {
       const result = await fetchJobListings();
 
       expect(result).toContain('3 open roles');
@@ -78,15 +80,44 @@ describe('careers tool', () => {
     });
 
     it('sorts teams alphabetically', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        json: () => Promise.resolve(mockAshbyResponse),
-      } as Response);
-
       const result = await fetchJobListings();
       const productIdx = result.indexOf('**Product**');
       const rndIdx = result.indexOf('**R&D**');
 
       expect(productIdx).toBeLessThan(rndIdx);
+    });
+
+    it('filters by team name (case-insensitive partial match)', async () => {
+      const result = await fetchJobListings({team: 'product'});
+
+      expect(result).toContain('1 open roles');
+      expect(result).toContain('**Product**');
+      expect(result).toContain('Principal Product Manager');
+      expect(result).not.toContain('**R&D**');
+    });
+
+    it('filters by keyword in job title (case-insensitive partial match)', async () => {
+      const result = await fetchJobListings({keyword: 'senior'});
+
+      expect(result).toContain('1 open roles');
+      expect(result).toContain('Senior Software Engineer');
+      expect(result).not.toContain('Principal Product Manager');
+      expect(result).not.toContain('Staff Software Engineer');
+    });
+
+    it('combines team and keyword filters', async () => {
+      const result = await fetchJobListings({team: 'r&d', keyword: 'staff'});
+
+      expect(result).toContain('1 open roles');
+      expect(result).toContain('Staff Software Engineer');
+      expect(result).not.toContain('Senior Software Engineer');
+    });
+
+    it('shows no-results message when filters match nothing', async () => {
+      const result = await fetchJobListings({team: 'legal'});
+
+      expect(result).toContain('No open roles found');
+      expect(result).toContain(CAREERS_URL);
     });
 
     it('falls back gracefully on API failure', async () => {
