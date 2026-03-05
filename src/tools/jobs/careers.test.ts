@@ -113,6 +113,26 @@ describe('careers tool', () => {
       expect(result).not.toContain('Senior Software Engineer');
     });
 
+    it('caps results at 20 and notes truncation in the header', async () => {
+      const manyJobs = Array.from({length: 25}, (_, i) => ({
+        id: `job-${i}`,
+        title: `Engineer ${i}`,
+        teamId: 'team-rnd',
+        locationName: 'US Remote',
+      }));
+      vi.mocked(fetch).mockResolvedValue({
+        json: () =>
+          Promise.resolve({
+            data: {jobBoard: {teams: [{name: 'R&D', id: 'team-rnd'}], jobPostings: manyJobs}},
+          }),
+      } as Response);
+
+      const result = await fetchJobListings();
+
+      expect(result).toContain('the first 20 open roles');
+      expect(result).not.toContain('Engineer 20');
+    });
+
     it('shows no-results message when filters match nothing', async () => {
       const result = await fetchJobListings({team: 'legal'});
 

@@ -72,12 +72,18 @@ export async function fetchJobListings(options: FetchJobListingsOptions = {}): P
   const teamFilter = options.team?.toLowerCase();
   const keywordFilter = options.keyword?.toLowerCase();
 
-  const filteredPostings = jobPostings.filter((job) => {
-    const teamName = teamMap.get(job.teamId) ?? 'Other';
-    if (teamFilter && !teamName.toLowerCase().includes(teamFilter)) return false;
-    if (keywordFilter && !job.title.toLowerCase().includes(keywordFilter)) return false;
-    return true;
-  });
+  const MAX_LISTINGS = 20;
+
+  const filteredPostings = jobPostings
+    .filter((job) => {
+      const teamName = teamMap.get(job.teamId) ?? 'Other';
+      if (teamFilter && !teamName.toLowerCase().includes(teamFilter)) return false;
+      if (keywordFilter && !job.title.toLowerCase().includes(keywordFilter)) return false;
+      return true;
+    })
+    .slice(0, MAX_LISTINGS);
+
+  const truncated = filteredPostings.length === MAX_LISTINGS;
 
   const byTeam = new Map<string, AshbyJobPosting[]>();
   for (const job of filteredPostings) {
@@ -102,9 +108,13 @@ export async function fetchJobListings(options: FetchJobListingsOptions = {}): P
       ? ` matching "${[options.team, options.keyword].filter(Boolean).join(', ')}"`
       : '';
 
+  const countLabel = truncated
+    ? `the first ${filteredPostings.length}`
+    : `${filteredPostings.length}`;
+
   const header =
     filteredPostings.length > 0
-      ? `Pinecone is hiring! Here are the ${filteredPostings.length} open roles${filterNote}:\n`
+      ? `Pinecone is hiring! Here are ${countLabel} open roles${filterNote}:\n`
       : `No open roles found${filterNote}. Check the full listings for the latest openings.`;
 
   return [header, ...sections, `\nFull listings: ${CAREERS_URL}`].join('\n');
