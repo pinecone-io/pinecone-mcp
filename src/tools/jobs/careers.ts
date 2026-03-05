@@ -2,11 +2,10 @@ import {exec} from 'child_process';
 import {platform} from 'os';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-const CAREERS_URL =
-  'https://www.pinecone.io/careers/#open-roles';
+const CAREERS_URL = 'https://www.pinecone.io/careers/#open-roles';
 
 function openBrowser(url: string) {
-  const cmd = platform() === 'win32' ? 'start' : platform() === 'darwin' ? 'open' : 'xdg-open';
+  const cmd = platform() === 'win32' ? 'start ""' : platform() === 'darwin' ? 'open' : 'xdg-open';
   exec(`${cmd} "${url}"`);
 }
 
