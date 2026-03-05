@@ -4,8 +4,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
 
 const CAREERS_URL = 'https://www.pinecone.io/careers/#open-roles';
-const ASHBY_API_URL =
-  'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiJobBoardWithTeams';
+const ASHBY_API_URL = 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiJobBoardWithTeams';
 const ASHBY_JOB_BASE_URL = 'https://jobs.ashbyhq.com/pinecone';
 
 const ASHBY_QUERY = `
@@ -39,12 +38,7 @@ interface AshbyResponse {
 }
 
 function openBrowser(url: string) {
-  const cmd =
-    platform() === 'win32'
-      ? 'start ""'
-      : platform() === 'darwin'
-        ? 'open'
-        : 'xdg-open';
+  const cmd = platform() === 'win32' ? 'start ""' : platform() === 'darwin' ? 'open' : 'xdg-open';
   exec(`${cmd} "${url}"`);
 }
 
@@ -96,9 +90,7 @@ export async function fetchJobListings(options: FetchJobListingsOptions = {}): P
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([team, jobs]) => {
       const listings = jobs
-        .map(
-          (j) => `• ${j.title} — ${j.locationName}\n  ${ASHBY_JOB_BASE_URL}/${j.id}`,
-        )
+        .map((j) => `• ${j.title} — ${j.locationName}\n  ${ASHBY_JOB_BASE_URL}/${j.id}`)
         .join('\n');
       return `**${team}**\n${listings}`;
     });
@@ -124,11 +116,15 @@ const INPUT_SCHEMA = z.object({
   team: z
     .string()
     .optional()
-    .describe('Filter by team name (e.g. "Engineering", "Product", "Sales"). Case-insensitive partial match.'),
+    .describe(
+      'Filter by team name (e.g. "Engineering", "Product", "Sales"). Case-insensitive partial match.',
+    ),
   keyword: z
     .string()
     .optional()
-    .describe('Filter by keyword in job title (e.g. "senior", "manager"). Case-insensitive partial match.'),
+    .describe(
+      'Filter by keyword in job title (e.g. "senior", "manager"). Case-insensitive partial match.',
+    ),
 });
 
 export function addCareersTool(server: McpServer) {
