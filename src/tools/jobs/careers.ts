@@ -1,4 +1,4 @@
-import {exec} from 'child_process';
+import {execFile} from 'child_process';
 import {platform} from 'os';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
@@ -38,8 +38,13 @@ interface AshbyResponse {
 }
 
 function openBrowser(url: string) {
-  const cmd = platform() === 'win32' ? 'start ""' : platform() === 'darwin' ? 'open' : 'xdg-open';
-  exec(`${cmd} "${url}"`);
+  if (platform() === 'win32') {
+    // On Windows, `start` is a shell built-in so we must go through cmd.exe.
+    // The empty string is a required placeholder for the window title.
+    execFile('cmd.exe', ['/c', 'start', '', url]);
+  } else {
+    execFile(platform() === 'darwin' ? 'open' : 'xdg-open', [url]);
+  }
 }
 
 interface FetchJobListingsOptions {
@@ -68,16 +73,15 @@ export async function fetchJobListings(options: FetchJobListingsOptions = {}): P
 
   const MAX_LISTINGS = 20;
 
-  const filteredPostings = jobPostings
-    .filter((job) => {
-      const teamName = teamMap.get(job.teamId) ?? 'Other';
-      if (teamFilter && !teamName.toLowerCase().includes(teamFilter)) return false;
-      if (keywordFilter && !job.title.toLowerCase().includes(keywordFilter)) return false;
-      return true;
-    })
-    .slice(0, MAX_LISTINGS);
+  const allMatchingPostings = jobPostings.filter((job) => {
+    const teamName = teamMap.get(job.teamId) ?? 'Other';
+    if (teamFilter && !teamName.toLowerCase().includes(teamFilter)) return false;
+    if (keywordFilter && !job.title.toLowerCase().includes(keywordFilter)) return false;
+    return true;
+  });
 
-  const truncated = filteredPostings.length === MAX_LISTINGS;
+  const truncated = allMatchingPostings.length > MAX_LISTINGS;
+  const filteredPostings = allMatchingPostings.slice(0, MAX_LISTINGS);
 
   const byTeam = new Map<string, AshbyJobPosting[]>();
   for (const job of filteredPostings) {
@@ -100,13 +104,13 @@ export async function fetchJobListings(options: FetchJobListingsOptions = {}): P
       ? ` matching "${[options.team, options.keyword].filter(Boolean).join(', ')}"`
       : '';
 
-  const countLabel = truncated
-    ? `the first ${filteredPostings.length}`
-    : `${filteredPostings.length}`;
+  const count = filteredPostings.length;
+  const roleLabel = count === 1 ? 'role' : 'roles';
+  const countLabel = truncated ? `the first ${count}` : `${count}`;
 
   const header =
-    filteredPostings.length > 0
-      ? `Pinecone is hiring! Here are ${countLabel} open roles${filterNote}:\n`
+    count > 0
+      ? `Pinecone is hiring! Here are ${countLabel} open ${roleLabel}${filterNote}:\n`
       : `No open roles found${filterNote}. Check the full listings for the latest openings.`;
 
   return [header, ...sections, `\nFull listings: ${CAREERS_URL}`].join('\n');

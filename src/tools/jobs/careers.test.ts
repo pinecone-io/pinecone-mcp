@@ -90,7 +90,7 @@ describe('careers tool', () => {
     it('filters by team name (case-insensitive partial match)', async () => {
       const result = await fetchJobListings({team: 'product'});
 
-      expect(result).toContain('1 open roles');
+      expect(result).toContain('1 open role');
       expect(result).toContain('**Product**');
       expect(result).toContain('Principal Product Manager');
       expect(result).not.toContain('**R&D**');
@@ -99,7 +99,7 @@ describe('careers tool', () => {
     it('filters by keyword in job title (case-insensitive partial match)', async () => {
       const result = await fetchJobListings({keyword: 'senior'});
 
-      expect(result).toContain('1 open roles');
+      expect(result).toContain('1 open role');
       expect(result).toContain('Senior Software Engineer');
       expect(result).not.toContain('Principal Product Manager');
       expect(result).not.toContain('Staff Software Engineer');
@@ -108,7 +108,7 @@ describe('careers tool', () => {
     it('combines team and keyword filters', async () => {
       const result = await fetchJobListings({team: 'r&d', keyword: 'staff'});
 
-      expect(result).toContain('1 open roles');
+      expect(result).toContain('1 open role');
       expect(result).toContain('Staff Software Engineer');
       expect(result).not.toContain('Senior Software Engineer');
     });
@@ -131,6 +131,33 @@ describe('careers tool', () => {
 
       expect(result).toContain('the first 20 open roles');
       expect(result).not.toContain('Engineer 20');
+    });
+
+    it('does not say "the first N" when exactly 20 jobs match', async () => {
+      const exactJobs = Array.from({length: 20}, (_, i) => ({
+        id: `job-${i}`,
+        title: `Engineer ${i}`,
+        teamId: 'team-rnd',
+        locationName: 'US Remote',
+      }));
+      vi.mocked(fetch).mockResolvedValue({
+        json: () =>
+          Promise.resolve({
+            data: {jobBoard: {teams: [{name: 'R&D', id: 'team-rnd'}], jobPostings: exactJobs}},
+          }),
+      } as Response);
+
+      const result = await fetchJobListings();
+
+      expect(result).toContain('20 open roles');
+      expect(result).not.toContain('the first 20');
+    });
+
+    it('uses singular "role" when exactly one job matches', async () => {
+      const result = await fetchJobListings({keyword: 'principal'});
+
+      expect(result).toContain('1 open role');
+      expect(result).not.toContain('1 open roles');
     });
 
     it('shows no-results message when filters match nothing', async () => {
