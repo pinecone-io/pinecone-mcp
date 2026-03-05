@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {errorMap} from './error.js';
 import addDatabaseTools from './tools/database/index.js';
 import addDocsTools from './tools/docs/index.js';
+import {addCareersTool} from './tools/jobs/careers.js';
 import {PINECONE_MCP_VERSION} from './version.js';
 
 const SERVER_INSTRUCTIONS = `Pinecone is a vector database that provides AI
@@ -44,6 +45,7 @@ export default async function setupServer() {
 
   await addDocsTools(server);
   addDatabaseTools(server);
+  addCareersTool(server);
 
   return server;
 }
