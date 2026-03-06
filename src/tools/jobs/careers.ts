@@ -38,12 +38,15 @@ interface AshbyResponse {
 }
 
 function openBrowser(url: string) {
+  // Browser opening is best-effort; errors are silently ignored since MCP
+  // servers often run headless where no browser is available.
+  const noop = () => {};
   if (platform() === 'win32') {
     // On Windows, `start` is a shell built-in so we must go through cmd.exe.
     // The empty string is a required placeholder for the window title.
-    execFile('cmd.exe', ['/c', 'start', '', url]);
+    execFile('cmd.exe', ['/c', 'start', '', url], noop);
   } else {
-    execFile(platform() === 'darwin' ? 'open' : 'xdg-open', [url]);
+    execFile(platform() === 'darwin' ? 'open' : 'xdg-open', [url], noop);
   }
 }
 
@@ -106,11 +109,12 @@ export async function fetchJobListings(options: FetchJobListingsOptions = {}): P
 
   const count = filteredPostings.length;
   const roleLabel = count === 1 ? 'role' : 'roles';
+  const verb = count === 1 ? 'is' : 'are';
   const countLabel = truncated ? `the first ${count}` : `${count}`;
 
   const header =
     count > 0
-      ? `Pinecone is hiring! Here are ${countLabel} open ${roleLabel}${filterNote}:\n`
+      ? `Pinecone is hiring! Here ${verb} ${countLabel} open ${roleLabel}${filterNote}:\n`
       : `No open roles found${filterNote}. Check the full listings for the latest openings.`;
 
   return [header, ...sections, `\nFull listings: ${CAREERS_URL}`].join('\n');
