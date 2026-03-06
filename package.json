@@ -64,6 +64,6 @@
     "url": "https://github.com/pinecone-io/pinecone-mcp/issues"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
