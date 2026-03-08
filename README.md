@@ -12,85 +12,82 @@ Once connected, AI tools can:
 * Generate code informed by your index configuration and data, as well as Pinecone documentation and examples.
 * Upsert and search for data in indexes, allowing you to test queries and evaluate results within your dev environment.
 
-See the [docs](https://docs.pinecone.io/guides/operations/mcp-server) for more detailed information.
-
 This MCP server is focused on improving the experience of developers working with Pinecone as part of their technology stack. It is intended for use with coding assistants. Pinecone also offers the [Assistant MCP](https://github.com/pinecone-io/assistant-mcp), which is designed to provide AI assistants with relevant context sourced from your knowledge base.
 
-## Setup
+## Getting Started
 
-To configure the MCP server to access your Pinecone project, you will need to generate an API key using the [console](https://app.pinecone.io). Without an API key, your AI tool will still be able to search documentation. However, it will not be able to manage or query your indexes.
+Choose your AI assistant and follow the complete setup guide:
 
-The MCP server requires [Node.js](https://nodejs.org) v18 or later. Ensure that `node` and `npx` are available in your `PATH`.
+### 🎯 [Cursor](./examples/integrations/cursor-workflow.md)
+Complete guide to setting up and using Pinecone MCP in Cursor IDE. Includes configuration, creating indexes, searching data, and code generation workflows.
 
-Next, you will need to configure your AI assistant to use the MCP server.
+### 💬 [Claude Desktop](./examples/integrations/claude-desktop-workflow.md)
+End-to-end walkthrough for Claude Desktop. Build a searchable knowledge base, perform semantic searches, and leverage conversational AI with your data.
 
-### Configure Cursor
+### ⌨️ [Gemini CLI](./examples/integrations/gemini-cli-workflow.md)
+Command-line workflow with Gemini CLI. Learn how to automate index creation, build scripts for bulk operations, and integrate with your development tools.
 
-To add the Pinecone MCP server to a project, create a `.cursor/mcp.json` file in the project root (if it doesn't already exist) and add the following configuration:
+Each guide includes:
+- Step-by-step installation and configuration
+- Creating your first index
+- Upserting and searching data
+- Real-world examples and use cases
+- Troubleshooting tips
 
+## Quick Setup
+
+**Prerequisites:**
+- [Node.js](https://nodejs.org) v18 or later
+- Pinecone API key from the [console](https://app.pinecone.io)
+
+**Configuration varies by tool** - follow the complete guide for your AI assistant above for detailed instructions.
+
+### Configuration Examples
+
+**Cursor** - Create `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
     "pinecone": {
       "command": "npx",
-      "args": [
-        "-y", "@pinecone-database/mcp"
-      ],
+      "args": ["-y", "@pinecone-database/mcp"],
       "env": {
-        "PINECONE_API_KEY": "<your pinecone api key>"
+        "PINECONE_API_KEY": "<your-api-key>"
       }
     }
   }
 }
 ```
+See the [complete Cursor guide](./examples/integrations/cursor-workflow.md) for detailed setup and usage.
 
-You can check the status of the server in **Cursor Settings > MCP**.
-
-To enable the server globally, add the configuration to the `.cursor/mcp.json` in your home directory instead.
-
-It is recommended to use rules to instruct Cursor on proper usage of the MCP server. Check out the [docs](https://docs.pinecone.io/guides/operations/mcp-server#configure-cursor) for some suggestions.
-
-### Configure Claude desktop
-
-Use Claude desktop to locate the `claude_desktop_config.json` file by navigating to **Settings > Developer > Edit Config**. Add the following configuration:
-
+**Claude Desktop** - Edit config via **Settings > Developer > Edit Config**:
 ```json
 {
   "mcpServers": {
     "pinecone": {
       "command": "npx",
-      "args": [
-        "-y", "@pinecone-database/mcp"
-      ],
+      "args": ["-y", "@pinecone-database/mcp"],
       "env": {
-        "PINECONE_API_KEY": "<your pinecone api key>"
+        "PINECONE_API_KEY": "<your-api-key>"
       }
     }
   }
 }
 ```
+See the [complete Claude Desktop guide](./examples/integrations/claude-desktop-workflow.md) for detailed setup and usage.
 
-Restart Claude desktop. On the new chat screen, you should see a hammer (MCP) icon appear with the new MCP tools available.
-
-### Use as a Gemini CLI extension
-
-To install this as a [Gemini CLI](https://github.com/google-gemini/gemini-cli) extension, run the following command:
-
+**Gemini CLI** - Install as an extension:
 ```bash
 gemini extensions install https://github.com/pinecone-io/pinecone-mcp
+export PINECONE_API_KEY=<your-api-key>
 ```
-
-You will need to provide your Pinecone API key in the `PINECONE_API_KEY` environment variable.
-
-```bash
-export PINECONE_API_KEY=<your pinecone api key>
-```
-
-When you run `gemini` and press `ctrl+t`, `pinecone` should now be shown in the list of installed MCP servers.
+See the [complete Gemini CLI guide](./examples/integrations/gemini-cli-workflow.md) for detailed setup and usage.
 
 ## Usage
 
 Once configured, your AI tool will automatically make use of the MCP to interact with Pinecone. You may be prompted for permission before a tool can be used.
+
+For complete workflows and real-world examples, see the [integration guides](#getting-started) for your specific AI assistant.
 
 ### Example prompts
 
@@ -120,30 +117,30 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 
 Only indexes with integrated inference are supported. Assistants, indexes without integrated inference, standalone embeddings, and vector search are not supported.
 
+## Learn More
+
+After getting started with your AI assistant, explore these tutorials:
+
+**Quickstart Tutorials:**
+- [Creating Your First Index](./examples/quickstart/create-index.md) - Set up a Pinecone index with integrated inference
+- [Upserting Records and Basic Search](./examples/quickstart/upsert-search.md) - Add data and perform semantic searches
+- [Using Reranking](./examples/quickstart/reranking.md) - Improve search relevance with reranking models
+
+**Advanced Patterns:**
+- [Cascading Search](./examples/advanced/cascading-search.md) - Search across multiple indexes with deduplication
+- [Error Handling](./examples/advanced/error-handling.md) - Build resilient applications with proper error handling
+
 ## Troubleshooting
 
-### MCP server not appearing in your AI tool
+If you encounter issues:
 
-- Ensure Node.js v18 or later is installed: `node --version`
-- Verify `npx` is available in your PATH: `which npx`
-- Check that your configuration file is in the correct location and has valid JSON syntax
+- Ensure Node.js v18 or later is installed and `npx` is in your PATH
+- Verify your Pinecone API key is correct in the [console](https://app.pinecone.io)
+- Check that your MCP configuration file has valid JSON syntax
 - Restart your AI tool after making configuration changes
+- The MCP server only supports indexes with integrated inference
 
-### "Invalid API key" or authentication errors
-
-- Verify your API key is correct in the [Pinecone console](https://app.pinecone.io)
-- Check that the `PINECONE_API_KEY` environment variable is set correctly in your MCP configuration
-- Ensure there are no extra spaces or quotes around the API key value
-
-### Tools not working as expected
-
-- The MCP server only supports indexes with integrated inference. If you're trying to use a serverless index without integrated inference, you'll need to create a new index with an embedding model
-- Check the MCP server logs for error messages. In Cursor, view logs in **Cursor Settings > MCP**
-
-### Connection issues
-
-- If using a corporate network, ensure your firewall allows connections to `api.pinecone.io`
-- Try running the server manually to see detailed error output: `PINECONE_API_KEY=<your-key> npx @pinecone-database/mcp`
+For detailed troubleshooting steps, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 ## Contributing
 
