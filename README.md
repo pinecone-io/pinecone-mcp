@@ -80,11 +80,7 @@ To install this as a [Gemini CLI](https://github.com/google-gemini/gemini-cli) e
 gemini extensions install https://github.com/pinecone-io/pinecone-mcp
 ```
 
-You will need to provide your Pinecone API key in the `PINECONE_API_KEY` environment variable.
-
-```bash
-export PINECONE_API_KEY=<your pinecone api key>
-```
+You will need to provide your Pinecone API key when prompted.
 
 When you run `gemini` and press `ctrl+t`, `pinecone` should now be shown in the list of installed MCP servers.
 
