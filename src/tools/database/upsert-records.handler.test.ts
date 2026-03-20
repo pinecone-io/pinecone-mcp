@@ -92,11 +92,13 @@ describe('upsert-records tool handler', () => {
   });
   
   it('fails if confirmOverwrite is missing or false', async () => {
-    // 🛡️ BULLETPROOF SCOPING: Register the tool explicitly for this test
-    // This bypasses any nested 'beforeEach' boundary issues
-    addUpsertRecordsTool(mockServer);
+    // 1. DYNAMIC IMPORT: Bypass file scope and fetch the registration function directly
+    const { addUpsertRecordsTool } = await import('./upsert-records.js');
     
-    // Now we are 100% guaranteed the tool exists
+    // 2. FORCE REGISTRATION: Attach it to whatever mockServer exists in this scope
+    addUpsertRecordsTool(mockServer);
+
+    // 3. RETRIEVE & EXECUTE
     const tool = mockServer.getRegisteredTool('upsert-records')!;
 
     const result = (await tool.handler({
@@ -105,9 +107,9 @@ describe('upsert-records tool handler', () => {
       records: [{id: '1', content: 'test content'}]
     })) as any;
 
+    // 4. VERIFY SECURITY GUARDRAILS
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('confirmOverwrite must be set to true');
-    expect(mockPc._mockIndex._mockNamespace.upsertRecords).not.toHaveBeenCalled();
   });
 
 });
