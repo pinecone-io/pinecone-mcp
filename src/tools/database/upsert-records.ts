@@ -35,6 +35,9 @@ const SCHEMA = {
   name: z.string().describe('The index to upsert into.'),
   namespace: z.string().describe('The namespace to upsert into.'),
   records: RECORD_SET_SCHEMA,
+  confirmOverwrite: z
+    .boolean()
+    .describe('CRITICAL: Set to true to acknowledge that this will overwrite any existing records with the same IDs.'),
 };
 
 type UpsertArgs = {
@@ -49,7 +52,18 @@ export function addUpsertRecordsTool(server: McpServer) {
     'upsert-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async (args, pc) => {
-      const {name, namespace, records} = args as UpsertArgs;
+      const {name, namespace, records, confirmOverwrite} = args as any;
+
+      // --- SECURITY PATCH: Destructive Action Guardrail ---
+      if (confirmOverwrite !== true) {
+        return {
+          isError: true,
+          content: [{
+            type: 'text' as const, 
+            text: "Error: confirmOverwrite must be set to true. Upserting records can overwrite existing data. Please ask the user for confirmation."
+          }],
+        };
+      }
       try {
         const ns = pc.index(name).namespace(namespace);
         await ns.upsertRecords(records);

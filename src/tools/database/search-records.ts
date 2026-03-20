@@ -57,6 +57,10 @@ const SCHEMA = {
   namespace: z.string().describe('The namespace to search.'),
   query: SEARCH_QUERY_SCHEMA,
   rerank: RERANK_SCHEMA,
+  selectedMetadataKeys: z
+    .array(z.string())
+    .optional()
+    .describe('Optional: List of metadata keys to return. If omitted, all metadata is returned (Potential PII risk).'),
 };
 
 type SearchArgs = {
@@ -72,10 +76,29 @@ export function addSearchRecordsTool(server: McpServer) {
     'search-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async (args, pc) => {
-      const {name, namespace, query, rerank} = args as SearchArgs;
+      const {name, namespace, query, rerank, selectedMetadataKeys} = args as any;
       try {
         const ns = pc.index(name).namespace(namespace);
-        const results = await ns.searchRecords({query, rerank});
+        const results = (await ns.searchRecords({query, rerank})) as any;
+
+        // --- SECURITY PATCH: Metadata Filtering
+        // Handle both 'records' and 'matches' keys (SDK version variance)
+        const recordArray = results.records || results.matches;
+
+        if (Array.isArray(recordArray) && selectedMetadataKeys) {
+          const filtered = recordArray.map((record: any) => {
+            if (!record.metadata) return record;
+            const filteredMetadata: Record<string, any> = {};
+            selectedMetadataKeys.forEach((key: string) => {
+              if (record.metadata[key] !== undefined) filteredMetadata[key] = record.metadata[key];
+            });
+            return { ...record, metadata: filteredMetadata };
+          });
+
+          // Re-assign to whichever property the SDK provided
+          if (results.records) results.records = filtered;
+          if (results.matches) results.matches = filtered;
+        }
         return {
           content: [
             {
