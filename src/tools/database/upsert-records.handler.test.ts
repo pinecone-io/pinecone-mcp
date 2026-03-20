@@ -42,6 +42,7 @@ describe('upsert-records tool handler', () => {
       name: 'test-index',
       namespace: 'test-ns',
       records: [{id: '1', content: 'test content'}],
+      confirmOverwrite: true,
     });
 
     expect(mockPc.index).toHaveBeenCalledWith('test-index');
@@ -63,6 +64,7 @@ describe('upsert-records tool handler', () => {
       name: 'test-index',
       namespace: 'test-ns',
       records: [{id: '1', content: 'test content'}],
+      confirmOverwrite: true,
     });
 
     expect(result).toEqual({
@@ -80,6 +82,7 @@ describe('upsert-records tool handler', () => {
       name: 'test-index',
       namespace: 'test-ns',
       records: [{_id: 'alt-1', content: 'test content'}],
+      confirmOverwrite: true,
     })) as {content: Array<{text: string}>};
 
     expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([
@@ -87,4 +90,24 @@ describe('upsert-records tool handler', () => {
     ]);
     expect(result.content[0].text).toContain('successfully');
   });
+  
+  it('fails if confirmOverwrite is missing or false', async () => {
+    // 🛡️ BULLETPROOF SCOPING: Register the tool explicitly for this test
+    // This bypasses any nested 'beforeEach' boundary issues
+    addUpsertRecordsTool(mockServer);
+    
+    // Now we are 100% guaranteed the tool exists
+    const tool = mockServer.getRegisteredTool('upsert-records')!;
+
+    const result = (await tool.handler({
+      name: 'test-index',
+      namespace: 'test-ns',
+      records: [{id: '1', content: 'test content'}]
+    })) as any;
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('confirmOverwrite must be set to true');
+    expect(mockPc._mockIndex._mockNamespace.upsertRecords).not.toHaveBeenCalled();
+  });
+
 });

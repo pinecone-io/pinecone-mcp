@@ -57,6 +57,12 @@ const SCHEMA = {
   namespace: z.string().describe('The namespace to search.'),
   query: SEARCH_QUERY_SCHEMA,
   rerank: RERANK_SCHEMA,
+  selectedMetadataKeys: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Optional: List of metadata keys to return. If omitted, all metadata is returned (Potential PII risk).',
+    ),
 };
 
 type SearchArgs = {
@@ -64,7 +70,15 @@ type SearchArgs = {
   namespace: string;
   query: SearchQuery;
   rerank?: SearchRerank;
+  selectedMetadataKeys?: string[];
 };
+type SearchRecord = {
+  metadata?: Record<string, unknown>;
+} & Record<string, unknown>;
+type SearchResults = {
+  records?: SearchRecord[];
+  matches?: SearchRecord[];
+} & Record<string, unknown>;
 
 export function addSearchRecordsTool(server: McpServer) {
   registerDatabaseTool(
@@ -72,10 +86,31 @@ export function addSearchRecordsTool(server: McpServer) {
     'search-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async (args, pc) => {
-      const {name, namespace, query, rerank} = args as SearchArgs;
+      const {name, namespace, query, rerank, selectedMetadataKeys} = args as SearchArgs;
       try {
         const ns = pc.index(name).namespace(namespace);
-        const results = await ns.searchRecords({query, rerank});
+        const results = (await ns.searchRecords({query, rerank})) as SearchResults;
+
+        // --- SECURITY PATCH: Metadata Filtering
+        if (selectedMetadataKeys) {
+          const filterRecordMetadata = (recordArray: SearchRecord[]) =>
+            recordArray.map((record) => {
+              if (!record.metadata) return record;
+              const filteredMetadata: Record<string, unknown> = {};
+              selectedMetadataKeys.forEach((key) => {
+                if (record.metadata[key] !== undefined)
+                  filteredMetadata[key] = record.metadata[key];
+              });
+              return {...record, metadata: filteredMetadata};
+            });
+
+          if (Array.isArray(results.records)) {
+            results.records = filterRecordMetadata(results.records);
+          }
+          if (Array.isArray(results.matches)) {
+            results.matches = filterRecordMetadata(results.matches);
+          }
+        }
         return {
           content: [
             {
