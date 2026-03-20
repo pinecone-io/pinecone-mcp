@@ -68,6 +68,7 @@ type SearchArgs = {
   namespace: string;
   query: SearchQuery;
   rerank?: SearchRerank;
+  selectedMetadataKeys?: string[];
 };
 
 export function addSearchRecordsTool(server: McpServer) {
@@ -76,7 +77,7 @@ export function addSearchRecordsTool(server: McpServer) {
     'search-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async (args, pc) => {
-      const {name, namespace, query, rerank, selectedMetadataKeys} = args as any;
+      const {name, namespace, query, rerank, selectedMetadataKeys} = args as SearchArgs;
       try {
         const ns = pc.index(name).namespace(namespace);
         const results = (await ns.searchRecords({query, rerank})) as any;
@@ -85,19 +86,31 @@ export function addSearchRecordsTool(server: McpServer) {
         // Handle both 'records' and 'matches' keys (SDK version variance)
         const recordArray = results.records || results.matches;
 
-        if (Array.isArray(recordArray) && selectedMetadataKeys) {
-          const filtered = recordArray.map((record: any) => {
-            if (!record.metadata) return record;
-            const filteredMetadata: Record<string, any> = {};
-            selectedMetadataKeys.forEach((key: string) => {
-              if (record.metadata[key] !== undefined) filteredMetadata[key] = record.metadata[key];
+        if (selectedMetadataKeys) {
+          // Helper function to filter a single array of records safely
+          const applyFilter = (items: any[]) => {
+            return items.map((item: any) => {
+              if (!item.metadata) return item;
+              
+              const filteredMetadata: Record<string, any> = {};
+              selectedMetadataKeys.forEach((key: string) => {
+                if (item.metadata[key] !== undefined) {
+                  filteredMetadata[key] = item.metadata[key];
+                }
+              });
+              
+              return { ...item, metadata: filteredMetadata };
             });
-            return { ...record, metadata: filteredMetadata };
-          });
+          };
 
-          // Re-assign to whichever property the SDK provided
-          if (results.records) results.records = filtered;
-          if (results.matches) results.matches = filtered;
+          // Process records and matches completely independently
+          if (results.records && Array.isArray(results.records)) {
+            results.records = applyFilter(results.records);
+          }
+          
+          if (results.matches && Array.isArray(results.matches)) {
+            results.matches = applyFilter(results.matches);
+          }
         }
         return {
           content: [

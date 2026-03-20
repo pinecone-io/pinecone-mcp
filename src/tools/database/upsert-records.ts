@@ -44,6 +44,7 @@ type UpsertArgs = {
   name: string;
   namespace: string;
   records: IntegratedRecord[];
+  confirmOverwrite: boolean;
 };
 
 export function addUpsertRecordsTool(server: McpServer) {
@@ -52,7 +53,7 @@ export function addUpsertRecordsTool(server: McpServer) {
     'upsert-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async (args, pc) => {
-      const {name, namespace, records, confirmOverwrite} = args as any;
+      const {name, namespace, records, confirmOverwrite} = args as UpsertArgs;
 
       // --- SECURITY PATCH: Destructive Action Guardrail ---
       if (confirmOverwrite !== true) {
