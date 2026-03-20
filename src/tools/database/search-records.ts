@@ -83,9 +83,7 @@ export function addSearchRecordsTool(server: McpServer) {
         const results = (await ns.searchRecords({query, rerank})) as any;
 
         // --- SECURITY PATCH: Metadata Filtering
-        // Handle both 'records' and 'matches' keys (SDK version variance)
-        const recordArray = results.records || results.matches;
-
+        
         if (selectedMetadataKeys) {
           // Helper function to filter a single array of records safely
           const applyFilter = (items: any[]) => {
