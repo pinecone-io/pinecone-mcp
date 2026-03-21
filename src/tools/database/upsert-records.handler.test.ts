@@ -42,6 +42,7 @@ describe('upsert-records tool handler', () => {
       name: 'test-index',
       namespace: 'test-ns',
       records: [{id: '1', content: 'test content'}],
+      confirmOverwrite: true,
     });
 
     expect(mockPc.index).toHaveBeenCalledWith('test-index');
@@ -63,6 +64,7 @@ describe('upsert-records tool handler', () => {
       name: 'test-index',
       namespace: 'test-ns',
       records: [{id: '1', content: 'test content'}],
+      confirmOverwrite: true,
     });
 
     expect(result).toEqual({
@@ -80,6 +82,7 @@ describe('upsert-records tool handler', () => {
       name: 'test-index',
       namespace: 'test-ns',
       records: [{_id: 'alt-1', content: 'test content'}],
+      confirmOverwrite: true,
     })) as {content: Array<{text: string}>};
 
     expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([
@@ -87,4 +90,26 @@ describe('upsert-records tool handler', () => {
     ]);
     expect(result.content[0].text).toContain('successfully');
   });
+  
+  it('fails if confirmOverwrite is missing or false', async () => {
+    // 1. DYNAMIC IMPORT: Bypass file scope and fetch the registration function directly
+    const { addUpsertRecordsTool } = await import('./upsert-records.js');
+    
+    // 2. FORCE REGISTRATION: Attach it to whatever mockServer exists in this scope
+    addUpsertRecordsTool(mockServer as any);
+
+    // 3. RETRIEVE & EXECUTE
+    const tool = mockServer.getRegisteredTool('upsert-records')!;
+
+    const result = (await tool.handler({
+      name: 'test-index',
+      namespace: 'test-ns',
+      records: [{id: '1', content: 'test content'}]
+    })) as any;
+
+    // 4. VERIFY SECURITY GUARDRAILS
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('confirmOverwrite must be set to true');
+  });
+
 });

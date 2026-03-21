@@ -57,6 +57,10 @@ const SCHEMA = {
   namespace: z.string().describe('The namespace to search.'),
   query: SEARCH_QUERY_SCHEMA,
   rerank: RERANK_SCHEMA,
+  selectedMetadataKeys: z
+    .array(z.string())
+    .optional()
+    .describe('Optional: List of metadata keys to return. If omitted, all metadata is returned (Potential PII risk).'),
 };
 
 type SearchArgs = {
@@ -64,6 +68,7 @@ type SearchArgs = {
   namespace: string;
   query: SearchQuery;
   rerank?: SearchRerank;
+  selectedMetadataKeys?: string[];
 };
 
 export function addSearchRecordsTool(server: McpServer) {
@@ -72,10 +77,29 @@ export function addSearchRecordsTool(server: McpServer) {
     'search-records',
     {description: INSTRUCTIONS, inputSchema: SCHEMA},
     async (args, pc) => {
-      const {name, namespace, query, rerank} = args as SearchArgs;
+      const {name, namespace, query, rerank, selectedMetadataKeys} = args as SearchArgs;
       try {
         const ns = pc.index(name).namespace(namespace);
-        const results = await ns.searchRecords({query, rerank});
+        const results = (await ns.searchRecords({query, rerank})) as any;
+
+        // --- SECURITY PATCH: Metadata Filtering ---
+        // Target the actual Pinecone SDK response structure: { result: { hits: [{ fields: {...} }] } }
+        if (results?.result?.hits && Array.isArray(results.result.hits) && selectedMetadataKeys) {
+          results.result.hits = results.result.hits.map((hit: any) => {
+            // Pinecone stores metadata under 'fields' in this specific API
+            if (!hit.fields) return hit; 
+            
+            const filteredFields: Record<string, any> = {};
+            selectedMetadataKeys.forEach((key: string) => {
+              if (hit.fields[key] !== undefined) {
+                filteredFields[key] = hit.fields[key];
+              }
+            });
+            
+            return { ...hit, fields: filteredFields };
+          });
+        }
+        
         return {
           content: [
             {
