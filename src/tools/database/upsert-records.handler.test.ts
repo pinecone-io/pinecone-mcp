@@ -96,7 +96,7 @@ describe('upsert-records tool handler', () => {
     const { addUpsertRecordsTool } = await import('./upsert-records.js');
     
     // 2. FORCE REGISTRATION: Attach it to whatever mockServer exists in this scope
-    addUpsertRecordsTool(mockServer);
+    addUpsertRecordsTool(mockServer as any);
 
     // 3. RETRIEVE & EXECUTE
     const tool = mockServer.getRegisteredTool('upsert-records')!;

@@ -1,109 +1,171 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
+import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
 
-// 1. HOISTED MOCK: This must be at the very top to intercept the tools' imports
+// Mock the pinecone-client module
 vi.mock('./common/pinecone-client.js', () => ({
   getPineconeClient: vi.fn(),
 }));
 
-// Now import the tools and utilities
-import { createMockServer } from '../../test-utils/mock-server.js';
-import { createMockPinecone } from '../../test-utils/mock-pinecone.js';
-import { getPineconeClient } from './common/pinecone-client.js';
-import { addSearchRecordsTool } from './search-records.js';
-import { addUpsertRecordsTool } from './upsert-records.js';
+import {getPineconeClient} from './common/pinecone-client.js';
+import {addSearchRecordsTool} from './search-records.js';
 
-describe('Pinecone MCP Security Hardening', () => {
-  let mockServer: any;
-  let mockPc: any;
+describe('search-records tool', () => {
+  let mockPc: MockPinecone;
+  let mockServer: MockServer;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockServer = createMockServer();
     mockPc = createMockPinecone();
+    mockServer = createMockServer();
+    vi.mocked(getPineconeClient).mockReturnValue(mockPc as never);
+  });
 
-    // 2. Force the client factory to return our mock for every call
-    vi.mocked(getPineconeClient).mockReturnValue(mockPc);
+  it('registers with the correct name', () => {
+    addSearchRecordsTool(mockServer as never);
 
-    addSearchRecordsTool(mockServer);
-    addUpsertRecordsTool(mockServer);
+    expect(mockServer.registerTool).toHaveBeenCalledWith(
+      'search-records',
+      expect.objectContaining({
+        description: expect.any(String),
+        inputSchema: expect.any(Object),
+      }),
+      expect.any(Function),
+    );
+  });
+
+  it('returns search results on success', async () => {
+    const mockResults = {
+      result: {
+        hits: [
+          {_id: '1', fields: {content: 'result 1'}, _score: 0.9},
+          {_id: '2', fields: {content: 'result 2'}, _score: 0.8},
+        ],
+      },
+    };
+    mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue(mockResults);
+
+    addSearchRecordsTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-records');
+    const result = await tool!.handler({
+      name: 'test-index',
+      namespace: 'test-ns',
+      query: {inputs: {text: 'test query'}, topK: 10},
+    });
+
+    expect(mockPc.index).toHaveBeenCalledWith('test-index');
+    expect(mockPc._mockIndex.namespace).toHaveBeenCalledWith('test-ns');
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(mockResults, null, 2),
+        },
+      ],
+    });
+  });
+
+  it('passes rerank options when provided', async () => {
+    const mockResults = {result: {hits: []}};
+    mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue(mockResults);
+
+    addSearchRecordsTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-records');
+    await tool!.handler({
+      name: 'test-index',
+      namespace: 'test-ns',
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {
+        model: 'bge-reranker-v2-m3',
+        topN: 5,
+        rankFields: ['content'],
+      },
+    });
+
+    expect(mockPc._mockIndex._mockNamespace.searchRecords).toHaveBeenCalledWith({
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {
+        model: 'bge-reranker-v2-m3',
+        topN: 5,
+        rankFields: ['content'],
+      },
+    });
+  });
+
+  it('returns error response on API failure', async () => {
+    mockPc._mockIndex._mockNamespace.searchRecords.mockRejectedValue(new Error('Search failed'));
+
+    addSearchRecordsTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-records');
+    const result = await tool!.handler({
+      name: 'test-index',
+      namespace: 'test-ns',
+      query: {inputs: {text: 'test query'}, topK: 10},
+    });
+
+    expect(result).toEqual({
+      isError: true,
+      content: [{type: 'text', text: 'Search failed'}],
+    });
+  });
+
+  it('filters metadata fields when selectedMetadataKeys is provided', async () => {
+    // 1. Setup mock data with both safe and sensitive fields
+    const mockResults = {
+      result: {
+        hits: [
+          {
+            _id: '1',
+            fields: { public_data: 'safe', secret_ssn: '123-45-678' },
+            _score: 0.9
+          },
+          {
+            _id: '2',
+            fields: { public_data: 'also safe', secret_key: 'xyz' },
+            _score: 0.8
+          }
+        ],
+      },
+    };
+
+    // 2. Define exactly what we expect the handler to output after filtering
+    const expectedResults = {
+      result: {
+        hits: [
+          {
+            _id: '1',
+            fields: { public_data: 'safe' },
+            _score: 0.9
+          },
+          {
+            _id: '2',
+            fields: { public_data: 'also safe' },
+            _score: 0.8
+          }
+        ],
+      },
+    };
+
+    mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue(mockResults);
+
+    addSearchRecordsTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-records');
     
-    // Satisfy the initial constant check
-    vi.stubEnv('PINECONE_API_KEY', 'test-key');
-  });
-
-  describe('Metadata Firewall (search-records)', () => {
-    it('should strip unauthorized metadata keys from search results', async () => {
-      const mockRecords = {
-        records: [{
-          id: 'vec-1',
-          metadata: { text: 'public', ssn: 'secret-123' }
-        }]
-      };
-
-      mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue(mockRecords);
-
-      const tool = mockServer.getRegisteredTool('search-records');
-      const result = await tool.handler({
-        name: 'idx', namespace: 'ns',
-        query: { inputs: { text: 'test' }, topK: 1 },
-        selectedMetadataKeys: ['text']
-      });
-
-      // Helpful debugging: if it fails, show why
-      if (result.isError) {
-        throw new Error(`Tool returned error: ${result.content[0].text}`);
-      }
-
-      const output = JSON.parse(result.content[0].text);
-      expect(output.records[0].metadata.ssn).toBeUndefined();
-      expect(output.records[0].metadata.text).toBe('public');
+    // 3. Execute handler with the selectedMetadataKeys parameter
+    const result = await tool!.handler({
+      name: 'test-index',
+      namespace: 'test-ns',
+      query: {inputs: {text: 'test query'}, topK: 10},
+      selectedMetadataKeys: ['public_data'],
     });
 
-    it('should return all metadata if selectedMetadataKeys is omitted', async () => {
-      mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue({
-        records: [{ id: '1', metadata: { secret: 'data' } }]
-      });
-
-      const tool = mockServer.getRegisteredTool('search-records');
-      const result = await tool.handler({
-        name: 'idx', namespace: 'ns',
-        query: { inputs: { text: 'test' }, topK: 1 }
-      });
-
-      if (result.isError) {
-        throw new Error(`Tool returned error: ${result.content[0].text}`);
-      }
-
-      const output = JSON.parse(result.content[0].text);
-      expect(output.records[0].metadata.secret).toBe('data');
-    });
-  });
-
-  describe('Upsert Guardrail (upsert-records)', () => {
-    it('should block upsert if confirmOverwrite flag is missing', async () => {
-      const tool = mockServer.getRegisteredTool('upsert-records');
-      const result = await tool.handler({
-        name: 'idx', namespace: 'ns',
-        records: [{ id: '1', text: 'val' }]
-      });
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('confirmOverwrite must be set to true');
-    });
-
-    it('should execute upsert when confirmOverwrite is true', async () => {
-      mockPc._mockIndex._mockNamespace.upsertRecords.mockResolvedValue(undefined);
-      const tool = mockServer.getRegisteredTool('upsert-records');
-
-      const result = await tool.handler({
-        name: 'idx', namespace: 'ns',
-        records: [{ id: '1', text: 'val' }],
-        confirmOverwrite: true
-      });
-
-      // Final check: ensure no error was returned
-      expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toBe('Data upserted successfully');
+    // 4. Verify the output matches the expected filtered JSON
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(expectedResults, null, 2),
+        },
+      ],
     });
   });
 });

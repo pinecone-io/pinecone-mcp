@@ -82,34 +82,24 @@ export function addSearchRecordsTool(server: McpServer) {
         const ns = pc.index(name).namespace(namespace);
         const results = (await ns.searchRecords({query, rerank})) as any;
 
-        // --- SECURITY PATCH: Metadata Filtering
-        
-        if (selectedMetadataKeys) {
-          // Helper function to filter a single array of records safely
-          const applyFilter = (items: any[]) => {
-            return items.map((item: any) => {
-              if (!item.metadata) return item;
-              
-              const filteredMetadata: Record<string, any> = {};
-              selectedMetadataKeys.forEach((key: string) => {
-                if (item.metadata[key] !== undefined) {
-                  filteredMetadata[key] = item.metadata[key];
-                }
-              });
-              
-              return { ...item, metadata: filteredMetadata };
+        // --- SECURITY PATCH: Metadata Filtering ---
+        // Target the actual Pinecone SDK response structure: { result: { hits: [{ fields: {...} }] } }
+        if (results?.result?.hits && Array.isArray(results.result.hits) && selectedMetadataKeys) {
+          results.result.hits = results.result.hits.map((hit: any) => {
+            // Pinecone stores metadata under 'fields' in this specific API
+            if (!hit.fields) return hit; 
+            
+            const filteredFields: Record<string, any> = {};
+            selectedMetadataKeys.forEach((key: string) => {
+              if (hit.fields[key] !== undefined) {
+                filteredFields[key] = hit.fields[key];
+              }
             });
-          };
-
-          // Process records and matches completely independently
-          if (results.records && Array.isArray(results.records)) {
-            results.records = applyFilter(results.records);
-          }
-          
-          if (results.matches && Array.isArray(results.matches)) {
-            results.matches = applyFilter(results.matches);
-          }
+            
+            return { ...hit, fields: filteredFields };
+          });
         }
+        
         return {
           content: [
             {
