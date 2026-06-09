@@ -6,8 +6,20 @@ import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS = 'Insert or update records in a Pinecone index';
 
+function isFieldValue(value: unknown) {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    (Array.isArray(value) && value.every((item) => typeof item === 'string'))
+  );
+}
+
 export const FIELD_VALUE_SCHEMA = z
-  .union([z.string(), z.number(), z.boolean(), z.array(z.string())])
+  .any()
+  .refine(isFieldValue, {
+    message: 'A field value must be a string, number, boolean, or array of strings.',
+  })
   .describe('A field value. Must be a string, number, boolean, or array of strings.');
 
 export const RECORD_SCHEMA = z
