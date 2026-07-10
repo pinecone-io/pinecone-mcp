@@ -50,7 +50,7 @@ describe('upsert-records tool handler', () => {
       {id: '1', content: 'test content'},
     ]);
     expect(result).toEqual({
-      content: [{type: 'text', text: 'Data upserted successfully'}],
+      content: [{type: 'text', text: expect.stringContaining('Upserted 1 record(s) successfully')}],
     });
   });
 

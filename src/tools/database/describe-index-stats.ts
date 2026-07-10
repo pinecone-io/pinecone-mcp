@@ -3,7 +3,9 @@ import {z} from 'zod';
 import {formatError} from './common/format-error.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
-const INSTRUCTIONS = 'Describe the statistics of a Pinecone index and its namespaces';
+const INSTRUCTIONS = `Describe the statistics of a Pinecone index, including
+record counts per namespace. Use this to discover which namespaces exist in an
+index. Counts may lag a few seconds behind recent upserts.`;
 
 const SCHEMA = {
   name: z.string().describe('The index to describe.'),
@@ -13,7 +15,12 @@ export function addDescribeIndexStatsTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'describe-index-stats',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Describe Index Stats',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async (args, pc) => {
       const {name} = args as {name: string};
       try {

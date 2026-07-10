@@ -1,6 +1,8 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {ToolAnnotations} from '@modelcontextprotocol/sdk/types.js';
 import {Pinecone} from '@pinecone-database/pinecone';
 import {z, ZodRawShape} from 'zod';
+import {formatError} from './format-error.js';
 import {getPineconeClient} from './pinecone-client.js';
 
 const LLM_CALLER_SCHEMA = {
@@ -24,20 +26,33 @@ type CallToolResult = {content: TextContent[]; isError?: boolean};
 export function registerDatabaseTool<T extends ZodRawShape>(
   server: McpServer,
   name: string,
-  config: {description: string; inputSchema: T},
+  config: {title?: string; description: string; inputSchema: T; annotations?: ToolAnnotations},
   handler: (args: Record<string, unknown>, pc: Pinecone) => Promise<CallToolResult>,
 ) {
   const mergedSchema = {...config.inputSchema, ...LLM_CALLER_SCHEMA};
 
-  server.registerTool(name, {description: config.description, inputSchema: mergedSchema}, (async (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    allArgs: any,
-  ) => {
-    const {llm_provider, llm_model, ...toolArgs} = allArgs as Record<string, unknown> & {
-      llm_provider?: string;
-      llm_model?: string;
-    };
-    const pc = getPineconeClient({provider: llm_provider, model: llm_model});
-    return handler(toolArgs, pc);
-  }) as never);
+  server.registerTool(
+    name,
+    {
+      title: config.title,
+      description: config.description,
+      inputSchema: mergedSchema,
+      annotations: config.annotations,
+    },
+    (async (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      allArgs: any,
+    ) => {
+      const {llm_provider, llm_model, ...toolArgs} = allArgs as Record<string, unknown> & {
+        llm_provider?: string;
+        llm_model?: string;
+      };
+      try {
+        const pc = getPineconeClient({provider: llm_provider, model: llm_model});
+        return await handler(toolArgs, pc);
+      } catch (e) {
+        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
+      }
+    }) as never,
+  );
 }

@@ -13,7 +13,9 @@ type SearchQuery = {
 };
 
 const INSTRUCTIONS = `Search across multiple indexes for records that are
-similar to the query text, deduplicate and rerank the results.`;
+similar to the query text, then deduplicate and rerank the combined results.
+Reranking is required for this tool. Only works with integrated-inference
+indexes. To search a single index, use search-records instead.`;
 
 const INDEX_SCHEMA = z.object({
   name: z.string().describe('An index to search.'),
@@ -75,17 +77,42 @@ export function addCascadingSearchTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'cascading-search',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Cascading Search',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async (args, pc) => {
       const {indexes, query, rerank} = args as CascadingSearchArgs;
       try {
-        const initialResults = await Promise.all(
+        const settled = await Promise.allSettled(
           indexes.map(async (index: IndexSpec) => {
             const ns = pc.index(index.name).namespace(index.namespace || '');
             const results = await ns.searchRecords({query});
             return results;
           }),
         );
+
+        const initialResults = [];
+        const failures: string[] = [];
+        for (const [i, outcome] of settled.entries()) {
+          if (outcome.status === 'fulfilled') {
+            initialResults.push(outcome.value);
+          } else {
+            failures.push(
+              `Search failed for index "${indexes[i].name}" ` +
+                `(namespace "${indexes[i].namespace}"): ${formatError(outcome.reason)}`,
+            );
+          }
+        }
+
+        if (initialResults.length === 0 && failures.length > 0) {
+          return {
+            isError: true,
+            content: [{type: 'text' as const, text: failures.join('\n\n')}],
+          };
+        }
 
         const deduplicatedResults: Record<string, Record<string, string>> = {};
         for (const results of initialResults) {
@@ -110,11 +137,15 @@ export function addCascadingSearchTool(server: McpServer) {
               )
             : [];
 
+        const warning =
+          failures.length > 0
+            ? `Warning: results are partial because some indexes could not be searched:\n${failures.join('\n')}\n\n`
+            : '';
         return {
           content: [
             {
               type: 'text' as const,
-              text: JSON.stringify(rerankedResults, null, 2),
+              text: warning + JSON.stringify(rerankedResults, null, 2),
             },
           ],
         };

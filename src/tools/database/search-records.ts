@@ -18,7 +18,12 @@ type SearchRerank = {
   query?: string;
 };
 
-const INSTRUCTIONS = 'Search an index for records that are similar to the query text';
+const INSTRUCTIONS = `Search an index for records that are semantically similar
+to the query text. Only works with integrated-inference indexes (e.g. created
+with create-index-for-model), which embed the query automatically; it fails on
+standard indexes — use describe-index to check the index type. Returns hits
+with "_id", "_score", and the record's stored "fields". Recently upserted
+records may take a few seconds to appear in results.`;
 
 const RERANK_SCHEMA = z
   .object({
@@ -70,7 +75,12 @@ export function addSearchRecordsTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'search-records',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Search Records',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async (args, pc) => {
       const {name, namespace, query, rerank} = args as SearchArgs;
       try {

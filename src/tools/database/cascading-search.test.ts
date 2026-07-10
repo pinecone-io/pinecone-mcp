@@ -135,20 +135,49 @@ describe('cascading-search tool', () => {
     });
   });
 
-  it('returns error response on API failure', async () => {
+  it('returns error response when all index searches fail', async () => {
     mockPc._mockIndex._mockNamespace.searchRecords.mockRejectedValue(new Error('Search failed'));
 
     addCascadingSearchTool(mockServer as never);
     const tool = mockServer.getRegisteredTool('cascading-search');
-    const result = await tool!.handler({
+    const result = (await tool!.handler({
       indexes: [{name: 'index-1', namespace: 'ns1'}],
       query: {inputs: {text: 'test query'}, topK: 10},
       rerank: {model: 'bge-reranker-v2-m3', topN: 5, rankFields: ['content']},
-    });
+    })) as {isError?: boolean; content: Array<{text: string}>};
 
-    expect(result).toEqual({
-      isError: true,
-      content: [{type: 'text', text: 'Search failed'}],
-    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('Search failed for index "index-1"');
+    expect(result.content[0].text).toContain('Search failed');
+  });
+
+  it('returns partial results with a warning when only some index searches fail', async () => {
+    const mockSearchResults = {
+      result: {hits: [{_id: '1', fields: {content: 'result 1'}, _score: 0.9}]},
+    };
+    const mockRerankResults = {
+      data: [{index: 0, score: 0.95, document: {content: 'result 1'}}],
+    };
+
+    mockPc._mockIndex._mockNamespace.searchRecords
+      .mockResolvedValueOnce(mockSearchResults)
+      .mockRejectedValueOnce(new Error('index is down'));
+    mockPc.inference.rerank.mockResolvedValue(mockRerankResults);
+
+    addCascadingSearchTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('cascading-search');
+    const result = (await tool!.handler({
+      indexes: [
+        {name: 'index-1', namespace: 'ns1'},
+        {name: 'index-2', namespace: 'ns2'},
+      ],
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {model: 'bge-reranker-v2-m3', topN: 5, rankFields: ['content']},
+    })) as {isError?: boolean; content: Array<{text: string}>};
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0].text).toContain('Warning: results are partial');
+    expect(result.content[0].text).toContain('Search failed for index "index-2"');
+    expect(result.content[0].text).toContain(JSON.stringify(mockRerankResults, null, 2));
   });
 });
