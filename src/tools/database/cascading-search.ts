@@ -1,7 +1,7 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
-import {formatError} from './common/format-error.js';
-import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
+import {errorResult, formatError} from '../common/format-error.js';
+import {RERANK_OPTIONS_SCHEMA} from './common/rerank-options.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 import {SEARCH_QUERY_SCHEMA} from './common/search-query.js';
 
@@ -22,35 +22,11 @@ const INDEX_SCHEMA = z.object({
   namespace: z.string().describe('A namespace to search.'),
 });
 
-const RERANK_SCHEMA = z
-  .object({
-    model: RERANK_MODEL_SCHEMA,
-    topN: z
-      .number()
-      .optional()
-      .describe(
-        `The number of results to return after reranking. Must be less than or
-        equal to the value of "query.topK".`,
-      ),
-    rankFields: z.array(z.string()).describe(
-      `The fields to rerank on. This should include the field name specified
-      in the index's "fieldMap". The "bge-reranker-v2-m3" and
-      "pinecone-rerank-v0" models support only a single rerank field.
-      "cohere-rerank-3.5" supports multiple rerank fields.`,
-    ),
-    query: z
-      .string()
-      .optional()
-      .describe(
-        `An optional query to rerank documents against. If not specified, the
-        same query will be used for both the initial search and the reranking.`,
-      ),
-  })
-  .describe(
-    `Specifies how the results should be reranked. Use a "query" with a "topK"
-    that returns more results than you need; then use "rerank" to select the
-    most relevant "topN" results.`,
-  );
+const RERANK_SCHEMA = RERANK_OPTIONS_SCHEMA.describe(
+  `Specifies how the results should be reranked. Use a "query" with a "topK"
+  that returns more results than you need; then use "rerank" to select the
+  most relevant "topN" results.`,
+);
 
 export const SCHEMA = {
   indexes: z
@@ -108,10 +84,7 @@ export function addCascadingSearchTool(server: McpServer) {
         }
 
         if (initialResults.length === 0 && failures.length > 0) {
-          return {
-            isError: true,
-            content: [{type: 'text' as const, text: failures.join('\n\n')}],
-          };
+          return errorResult(failures.join('\n\n'));
         }
 
         const deduplicatedResults: Record<string, Record<string, string>> = {};
@@ -131,7 +104,7 @@ export function addCascadingSearchTool(server: McpServer) {
                 rerank.query || query.inputs.text,
                 deduplicatedResultsArray,
                 {
-                  topN: rerank.topN || query.topK,
+                  topN: rerank.topN ?? query.topK,
                   rankFields: rerank.rankFields,
                 },
               )
@@ -154,10 +127,7 @@ export function addCascadingSearchTool(server: McpServer) {
           failures.length > 0
             ? `\n\nIn addition, some index searches had already failed:\n${failures.join('\n')}`
             : '';
-        return {
-          isError: true,
-          content: [{type: 'text' as const, text: formatError(e) + failureContext}],
-        };
+        return errorResult(formatError(e) + failureContext);
       }
     },
   );

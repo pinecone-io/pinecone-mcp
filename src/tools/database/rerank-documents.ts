@@ -1,6 +1,5 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
-import {formatError} from './common/format-error.js';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
@@ -70,14 +69,10 @@ export function addRerankDocumentsTool(server: McpServer) {
     },
     async (args, pc) => {
       const {model, query, documents, options} = args as RerankArgs;
-      try {
-        const results = await pc.inference.rerank(model, query, documents, options);
-        return {
-          content: [{type: 'text' as const, text: JSON.stringify(results, null, 2)}],
-        };
-      } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
-      }
+      const results = await pc.inference.rerank(model, query, documents, options);
+      return {
+        content: [{type: 'text' as const, text: JSON.stringify(results, null, 2)}],
+      };
     },
   );
 }

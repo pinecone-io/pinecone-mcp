@@ -4,6 +4,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
 import {DOCS_MCP_URL} from '../../constants.js';
 import {PINECONE_MCP_VERSION} from '../../version.js';
+import {errorResult, formatError} from '../common/format-error.js';
 
 const INSTRUCTIONS = `Search the official Pinecone documentation for relevant
 information. Use this before writing Pinecone code or explaining Pinecone
@@ -61,20 +62,12 @@ export function addSearchDocsTool(server: McpServer) {
           arguments: {query},
         })) as SearchDocsResult;
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        return {
-          isError: true,
-          content: [
-            {
-              type: 'text' as const,
-              text:
-                `Failed to search Pinecone documentation: ${message}\n\n` +
-                'Next step: this is usually a transient network issue — retry once. ' +
-                'If it persists, continue without documentation context and consult ' +
-                'https://docs.pinecone.io directly.',
-            },
-          ],
-        };
+        return errorResult(
+          `Failed to search Pinecone documentation: ${formatError(e)}\n\n` +
+            'Next step: this is usually a transient network issue — retry once. ' +
+            'If it persists, continue without documentation context and consult ' +
+            'https://docs.pinecone.io directly.',
+        );
       }
     },
   );

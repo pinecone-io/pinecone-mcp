@@ -2,7 +2,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {ToolAnnotations} from '@modelcontextprotocol/sdk/types.js';
 import {Pinecone} from '@pinecone-database/pinecone';
 import {z, ZodRawShape} from 'zod';
-import {formatError} from './format-error.js';
+import {errorResult, formatError} from '../../common/format-error.js';
 import {getPineconeClient} from './pinecone-client.js';
 
 const LLM_CALLER_SCHEMA = {
@@ -51,7 +51,7 @@ export function registerDatabaseTool<T extends ZodRawShape>(
         const pc = getPineconeClient({provider: llm_provider, model: llm_model});
         return await handler(toolArgs, pc);
       } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
+        return errorResult(formatError(e));
       }
     }) as never,
   );

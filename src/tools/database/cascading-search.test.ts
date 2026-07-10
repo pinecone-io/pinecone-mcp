@@ -118,6 +118,28 @@ describe('cascading-search tool', () => {
     );
   });
 
+  it('respects an explicit topN of 0 instead of falling back to topK', async () => {
+    mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue({
+      result: {hits: [{_id: '1', fields: {content: 'result 1'}, _score: 0.9}]},
+    });
+    mockPc.inference.rerank.mockResolvedValue({data: []});
+
+    addCascadingSearchTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('cascading-search');
+    await tool!.handler({
+      indexes: [{name: 'index-1', namespace: 'ns1'}],
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {model: 'bge-reranker-v2-m3', topN: 0, rankFields: ['content']},
+    });
+
+    expect(mockPc.inference.rerank).toHaveBeenCalledWith(
+      'bge-reranker-v2-m3',
+      'test query',
+      expect.any(Array),
+      expect.objectContaining({topN: 0}),
+    );
+  });
+
   it('handles empty results without calling rerank', async () => {
     mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue({result: {hits: []}});
 

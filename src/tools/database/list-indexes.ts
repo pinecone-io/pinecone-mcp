@@ -1,5 +1,4 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {formatError} from './common/format-error.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS = `List all Pinecone indexes in the project, including each
@@ -17,19 +16,15 @@ export function addListIndexesTool(server: McpServer) {
       annotations: {readOnlyHint: true},
     },
     async (_, pc) => {
-      try {
-        const indexes = await pc.listIndexes();
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify(indexes, null, 2),
-            },
-          ],
-        };
-      } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
-      }
+      const indexes = await pc.listIndexes();
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(indexes, null, 2),
+          },
+        ],
+      };
     },
   );
 }
