@@ -1,24 +1,10 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
-import {z} from 'zod';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
-import {DOCUMENTS_SCHEMA, SCHEMA} from './rerank-documents.js';
+import {DOCUMENTS_SCHEMA} from './rerank-documents.js';
 
-function findSchemaCompositionKeywords(value: unknown): string[] {
-  if (!value || typeof value !== 'object') {
-    return [];
-  }
-
-  const keywords: string[] = [];
-  for (const [key, nested] of Object.entries(value)) {
-    if (key === 'anyOf' || key === 'oneOf' || key === 'allOf') {
-      keywords.push(key);
-    }
-    keywords.push(...findSchemaCompositionKeywords(nested));
-  }
-  return keywords;
-}
-
+// The generated JSON Schema for this tool is guarded centrally in
+// src/tools/tool-schemas.test.ts; these cases only cover runtime validation.
 describe('DOCUMENTS_SCHEMA', () => {
   it('accepts an array of text documents', () => {
     expect(DOCUMENTS_SCHEMA.parse(['a', 'b'])).toEqual(['a', 'b']);
@@ -44,14 +30,6 @@ describe('DOCUMENTS_SCHEMA', () => {
 
   it('rejects records with non-string values', () => {
     expect(DOCUMENTS_SCHEMA.safeParse([{title: 'Doc', score: 1}]).success).toBe(false);
-  });
-
-  it('exports without schema composition keywords rejected by Claude tools', () => {
-    const inputSchema = z.object(SCHEMA);
-
-    const jsonSchema = z.toJSONSchema(inputSchema);
-
-    expect(findSchemaCompositionKeywords(jsonSchema)).toEqual([]);
   });
 });
 
