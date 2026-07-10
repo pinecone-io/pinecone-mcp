@@ -1,13 +1,13 @@
 import {vi} from 'vitest';
 
-export function createMockNamespace() {
+export function createMockNamespace(): any {
   return {
     searchRecords: vi.fn(),
     upsertRecords: vi.fn(),
   };
 }
 
-export function createMockIndex() {
+export function createMockIndex(): any {
   const mockNamespace = createMockNamespace();
   return {
     describeIndexStats: vi.fn(),
@@ -16,7 +16,7 @@ export function createMockIndex() {
   };
 }
 
-export function createMockPinecone() {
+export function createMockPinecone(): any {
   const mockIndex = createMockIndex();
   return {
     listIndexes: vi.fn(),
