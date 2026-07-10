@@ -85,6 +85,7 @@ export function addCascadingSearchTool(server: McpServer) {
     },
     async (args, pc) => {
       const {indexes, query, rerank} = args as CascadingSearchArgs;
+      const failures: string[] = [];
       try {
         const settled = await Promise.allSettled(
           indexes.map(async (index: IndexSpec) => {
@@ -95,7 +96,6 @@ export function addCascadingSearchTool(server: McpServer) {
         );
 
         const initialResults = [];
-        const failures: string[] = [];
         for (const [i, outcome] of settled.entries()) {
           if (outcome.status === 'fulfilled') {
             initialResults.push(outcome.value);
@@ -150,7 +150,14 @@ export function addCascadingSearchTool(server: McpServer) {
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
+        const failureContext =
+          failures.length > 0
+            ? `\n\nIn addition, some index searches had already failed:\n${failures.join('\n')}`
+            : '';
+        return {
+          isError: true,
+          content: [{type: 'text' as const, text: formatError(e) + failureContext}],
+        };
       }
     },
   );

@@ -180,4 +180,30 @@ describe('cascading-search tool', () => {
     expect(result.content[0].text).toContain('Search failed for index "index-2"');
     expect(result.content[0].text).toContain(JSON.stringify(mockRerankResults, null, 2));
   });
+
+  it('includes earlier index failures in the error when reranking fails', async () => {
+    const mockSearchResults = {
+      result: {hits: [{_id: '1', fields: {content: 'result 1'}, _score: 0.9}]},
+    };
+
+    mockPc._mockIndex._mockNamespace.searchRecords
+      .mockResolvedValueOnce(mockSearchResults)
+      .mockRejectedValueOnce(new Error('index is down'));
+    mockPc.inference.rerank.mockRejectedValue(new Error('rerank model unavailable'));
+
+    addCascadingSearchTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('cascading-search');
+    const result = (await tool!.handler({
+      indexes: [
+        {name: 'index-1', namespace: 'ns1'},
+        {name: 'index-2', namespace: 'ns2'},
+      ],
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {model: 'bge-reranker-v2-m3', topN: 5, rankFields: ['content']},
+    })) as {isError?: boolean; content: Array<{text: string}>};
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('rerank model unavailable');
+    expect(result.content[0].text).toContain('Search failed for index "index-2"');
+  });
 });
