@@ -1,13 +1,28 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {IntegratedRecord} from '@pinecone-database/pinecone';
 import {z} from 'zod';
-import {formatError} from './common/format-error.js';
+import {FRESHNESS_NOTE} from './common/messages.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
-const INSTRUCTIONS = 'Insert or update records in a Pinecone index';
+const INSTRUCTIONS = `Insert or update records in an integrated Pinecone index.
+Text in the field named by the index's "fieldMap" is embedded automatically —
+call describe-index first to confirm that field name. Records with an existing
+"id" are overwritten. ${FRESHNESS_NOTE}`;
+
+function isFieldValue(value: unknown) {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    (Array.isArray(value) && value.every((item) => typeof item === 'string'))
+  );
+}
 
 export const FIELD_VALUE_SCHEMA = z
-  .union([z.string(), z.number(), z.boolean(), z.array(z.string())])
+  .any()
+  .refine(isFieldValue, {
+    message: 'A field value must be a string, number, boolean, or array of strings.',
+  })
   .describe('A field value. Must be a string, number, boolean, or array of strings.');
 
 export const RECORD_SCHEMA = z
@@ -47,18 +62,24 @@ export function addUpsertRecordsTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'upsert-records',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Upsert Records',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: false, destructiveHint: true, idempotentHint: true},
+    },
     async (args, pc) => {
       const {name, namespace, records} = args as UpsertArgs;
-      try {
-        const ns = pc.index(name).namespace(namespace);
-        await ns.upsertRecords(records);
-        return {
-          content: [{type: 'text' as const, text: 'Data upserted successfully'}],
-        };
-      } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
-      }
+      const ns = pc.index(name).namespace(namespace);
+      await ns.upsertRecords(records);
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: `Upserted ${records.length} record(s) successfully. ${FRESHNESS_NOTE}`,
+          },
+        ],
+      };
     },
   );
 }

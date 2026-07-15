@@ -113,6 +113,78 @@ describe('registerDatabaseTool', () => {
     });
   });
 
+  it('passes title and annotations through to the server', async () => {
+    const {registerDatabaseTool} = await import('./register-tool.js');
+    const mockServer = {
+      registerTool: vi.fn(),
+    };
+
+    registerDatabaseTool(
+      mockServer as never,
+      'test-tool',
+      {
+        title: 'Test Tool',
+        description: 'A test tool',
+        inputSchema: {},
+        annotations: {readOnlyHint: true},
+      },
+      async () => ({content: [{type: 'text', text: 'ok'}]}),
+    );
+
+    const [, config] = mockServer.registerTool.mock.calls[0];
+    expect(config.title).toBe('Test Tool');
+    expect(config.annotations).toEqual({readOnlyHint: true});
+  });
+
+  it('returns an in-band error result when the Pinecone client cannot be created', async () => {
+    const {getPineconeClient} = await import('./pinecone-client.js');
+    vi.mocked(getPineconeClient).mockImplementationOnce(() => {
+      throw new Error('PINECONE_API_KEY environment variable is not set');
+    });
+
+    const {registerDatabaseTool} = await import('./register-tool.js');
+    const mockServer = {
+      registerTool: vi.fn(),
+    };
+
+    const handler = vi.fn();
+    registerDatabaseTool(
+      mockServer as never,
+      'test-tool',
+      {description: 'Test', inputSchema: {}},
+      handler,
+    );
+
+    const registeredHandler = mockServer.registerTool.mock.calls[0][2];
+    const result = await registeredHandler({});
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('PINECONE_API_KEY');
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('returns an in-band error result when the handler throws', async () => {
+    const {registerDatabaseTool} = await import('./register-tool.js');
+    const mockServer = {
+      registerTool: vi.fn(),
+    };
+
+    registerDatabaseTool(
+      mockServer as never,
+      'test-tool',
+      {description: 'Test', inputSchema: {}},
+      async () => {
+        throw new Error('unexpected handler failure');
+      },
+    );
+
+    const registeredHandler = mockServer.registerTool.mock.calls[0][2];
+    const result = await registeredHandler({});
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('unexpected handler failure');
+  });
+
   it('passes Pinecone client to handler', async () => {
     const {registerDatabaseTool} = await import('./register-tool.js');
     const mockServer = {
