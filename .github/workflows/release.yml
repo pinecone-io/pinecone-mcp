@@ -62,6 +62,9 @@ jobs:
           git_email: 'clients@pinecone.io'
           git_username: ${{ github.actor }}
 
+      - name: Security audit
+        run: npm audit --audit-level=high
+
       ##### VERSION BUMP #####
       - name: 'Bump version for production release'
         if: inputs.releaseMode == 'prod'
