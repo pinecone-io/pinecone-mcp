@@ -4,8 +4,11 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
 import {DOCS_MCP_URL} from '../../constants.js';
 import {PINECONE_MCP_VERSION} from '../../version.js';
+import {errorResult, formatError} from '../common/format-error.js';
 
-const INSTRUCTIONS = 'Search Pinecone documentation for relevant information';
+const INSTRUCTIONS = `Search the official Pinecone documentation for relevant
+information. Use this before writing Pinecone code or explaining Pinecone
+behavior, rather than relying on assumptions.`;
 
 const SCHEMA = {
   query: z.string().describe('The text to search for.'),
@@ -44,14 +47,28 @@ function getDocsClient(): Promise<Client> {
 export function addSearchDocsTool(server: McpServer) {
   server.registerTool(
     'search-docs',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Search Pinecone Documentation',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async ({query}) => {
-      const client = await getDocsClient();
+      try {
+        const client = await getDocsClient();
 
-      return (await client.callTool({
-        name: 'get_context',
-        arguments: {query},
-      })) as SearchDocsResult;
+        return (await client.callTool({
+          name: 'get_context',
+          arguments: {query},
+        })) as SearchDocsResult;
+      } catch (e) {
+        return errorResult(
+          `Failed to search Pinecone documentation: ${formatError(e)}\n\n` +
+            'Next step: this is usually a transient network issue — retry once. ' +
+            'If it persists, continue without documentation context and consult ' +
+            'https://docs.pinecone.io directly.',
+        );
+      }
     },
   );
 }

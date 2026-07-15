@@ -11,8 +11,12 @@ import {addUpsertRecordsTool} from './upsert-records.js';
 
 export default function addDatabaseTools(server: McpServer) {
   if (!PINECONE_API_KEY) {
-    console.error('Skipping database tools -- PINECONE_API_KEY environment variable is not set.');
-    return;
+    // Register the tools anyway: each call will return an actionable error,
+    // which keeps the failure visible to the connected agent instead of the
+    // tools silently disappearing from the tool list.
+    console.error(
+      'Warning: PINECONE_API_KEY environment variable is not set. Database tools will return an error until it is provided.',
+    );
   }
 
   addListIndexesTool(server);

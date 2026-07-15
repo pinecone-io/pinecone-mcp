@@ -1,6 +1,5 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
-import {formatError} from './common/format-error.js';
 import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
@@ -10,7 +9,11 @@ type RerankOptionsType = {
   rankFields?: string[];
 };
 
-const INSTRUCTIONS = `Rerank a set of documents based on a query`;
+const INSTRUCTIONS = `Rerank a set of provided documents by relevance to a
+query. Use this for documents that did not come from a Pinecone search (e.g.
+externally sourced text). To rerank the results of a single-index search,
+prefer the "rerank" parameter of search-records instead of calling this tool
+separately.`;
 
 export const RerankDocumentsOptions = z
   .object({
@@ -30,11 +33,14 @@ export const RerankDocumentsOptions = z
 const Documents = z
   .union([
     z.array(z.string()).describe('An array of text documents to rerank.'),
-    z.array(z.record(z.string(), z.string())).describe('An array of records to rerank.'),
+    z
+      .array(z.record(z.string(), z.string()))
+      .describe('An array of records to rerank. All field values must be strings.'),
   ])
   .describe(
     `A set of documents to rerank. Can either be an array of text documents
-    (strings) or an array of records.`,
+    (strings) or an array of records. Record field values must be strings;
+    records with number, boolean, or array fields are not accepted.`,
   );
 
 export const SCHEMA = {
@@ -55,17 +61,18 @@ export function addRerankDocumentsTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'rerank-documents',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Rerank Documents',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async (args, pc) => {
       const {model, query, documents, options} = args as RerankArgs;
-      try {
-        const results = await pc.inference.rerank(model, query, documents, options);
-        return {
-          content: [{type: 'text' as const, text: JSON.stringify(results, null, 2)}],
-        };
-      } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
-      }
+      const results = await pc.inference.rerank(model, query, documents, options);
+      return {
+        content: [{type: 'text' as const, text: JSON.stringify(results, null, 2)}],
+      };
     },
   );
 }

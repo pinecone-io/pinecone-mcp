@@ -36,7 +36,7 @@ describe('addDatabaseTools', () => {
     expect(registeredTools.length).toBe(8);
   });
 
-  it('skips registration when API key is not set', async () => {
+  it('still registers tools when API key is not set, with a warning', async () => {
     vi.stubEnv('PINECONE_API_KEY', '');
 
     const {default: addDatabaseTools} = await import('./index.js');
@@ -44,10 +44,24 @@ describe('addDatabaseTools', () => {
 
     addDatabaseTools(mockServer as never);
 
-    expect(mockServer.getRegisteredToolNames().length).toBe(0);
+    expect(mockServer.getRegisteredToolNames().length).toBe(8);
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('PINECONE_API_KEY'));
 
     consoleSpy.mockRestore();
+  });
+
+  it('all tools declare a title and annotations', async () => {
+    vi.stubEnv('PINECONE_API_KEY', 'test-api-key');
+
+    const {default: addDatabaseTools} = await import('./index.js');
+    addDatabaseTools(mockServer as never);
+
+    for (const toolName of mockServer.getRegisteredToolNames()) {
+      const tool = mockServer.getRegisteredTool(toolName);
+      expect(tool?.title, `${toolName} is missing a title`).toEqual(expect.any(String));
+      expect(tool?.annotations, `${toolName} is missing annotations`).toBeDefined();
+      expect(tool?.annotations).toHaveProperty('readOnlyHint');
+    }
   });
 
   it('tools include llm_provider and llm_model in their schemas', async () => {

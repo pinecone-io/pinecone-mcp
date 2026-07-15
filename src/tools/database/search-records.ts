@@ -1,7 +1,7 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
-import {formatError} from './common/format-error.js';
-import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
+import {FRESHNESS_NOTE} from './common/messages.js';
+import {RERANK_OPTIONS_SCHEMA} from './common/rerank-options.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 import {SEARCH_QUERY_SCHEMA} from './common/search-query.js';
 
@@ -18,39 +18,18 @@ type SearchRerank = {
   query?: string;
 };
 
-const INSTRUCTIONS = 'Search an index for records that are similar to the query text';
+const INSTRUCTIONS = `Search an index for records that are semantically similar
+to the query text. Only works with integrated-inference indexes (e.g. created
+with create-index-for-model), which embed the query automatically; it fails on
+standard indexes — use describe-index to check the index type. Returns hits
+with "_id", "_score", and the record's stored "fields". ${FRESHNESS_NOTE}`;
 
-const RERANK_SCHEMA = z
-  .object({
-    model: RERANK_MODEL_SCHEMA,
-    topN: z
-      .number()
-      .optional()
-      .describe(
-        `The number of results to return after reranking. Must be less than or
-        equal to the value of "query.topK".`,
-      ),
-    rankFields: z.array(z.string()).describe(
-      `The fields to rerank on. This should include the field name specified
-      in the index's "fieldMap". The "bge-reranker-v2-m3" and
-      "pinecone-rerank-v0" models support only a single rerank field.
-      "cohere-rerank-3.5" supports multiple rerank fields.`,
-    ),
-    query: z
-      .string()
-      .optional()
-      .describe(
-        `An optional query to rerank documents against. If not specified, the
-        same query will be used for both the initial search and the reranking.`,
-      ),
-  })
-  .optional()
-  .describe(
-    `Reranking can help determine which of the returned records are most
-    relevant. When reranking, use a "query" with a "topK" that returns more
-    results than you need; then use "rerank" to select the most relevant
-    "topN" results.`,
-  );
+const RERANK_SCHEMA = RERANK_OPTIONS_SCHEMA.optional().describe(
+  `Reranking can help determine which of the returned records are most
+  relevant. When reranking, use a "query" with a "topK" that returns more
+  results than you need; then use "rerank" to select the most relevant
+  "topN" results.`,
+);
 
 const SCHEMA = {
   name: z.string().describe('The index to search.'),
@@ -70,23 +49,24 @@ export function addSearchRecordsTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'search-records',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Search Records',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async (args, pc) => {
       const {name, namespace, query, rerank} = args as SearchArgs;
-      try {
-        const ns = pc.index(name).namespace(namespace);
-        const results = await ns.searchRecords({query, rerank});
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify(results, null, 2),
-            },
-          ],
-        };
-      } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
-      }
+      const ns = pc.index(name).namespace(namespace);
+      const results = await ns.searchRecords({query, rerank});
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(results, null, 2),
+          },
+        ],
+      };
     },
   );
 }

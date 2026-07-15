@@ -17,7 +17,12 @@ function getCacheKey(caller?: Caller): string {
 
 export function getPineconeClient(caller?: Caller): Pinecone {
   if (!PINECONE_API_KEY) {
-    throw new Error('PINECONE_API_KEY environment variable is not set');
+    throw new Error(
+      'PINECONE_API_KEY environment variable is not set, so Pinecone database tools ' +
+        'cannot run. Do not retry. Ask the user to create an API key at ' +
+        'https://app.pinecone.io, add it to the MCP server configuration as ' +
+        'PINECONE_API_KEY, and restart the MCP server.',
+    );
   }
 
   const key = getCacheKey(caller);

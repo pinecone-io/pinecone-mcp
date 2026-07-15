@@ -1,7 +1,7 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
-import {formatError} from './common/format-error.js';
-import {RERANK_MODEL_SCHEMA} from './common/rerank-model.js';
+import {errorResult, formatError} from '../common/format-error.js';
+import {RERANK_OPTIONS_SCHEMA} from './common/rerank-options.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 import {SEARCH_QUERY_SCHEMA} from './common/search-query.js';
 
@@ -13,42 +13,20 @@ type SearchQuery = {
 };
 
 const INSTRUCTIONS = `Search across multiple indexes for records that are
-similar to the query text, deduplicate and rerank the results.`;
+similar to the query text, then deduplicate and rerank the combined results.
+Reranking is required for this tool. Only works with integrated-inference
+indexes. To search a single index, use search-records instead.`;
 
 const INDEX_SCHEMA = z.object({
   name: z.string().describe('An index to search.'),
   namespace: z.string().describe('A namespace to search.'),
 });
 
-const RERANK_SCHEMA = z
-  .object({
-    model: RERANK_MODEL_SCHEMA,
-    topN: z
-      .number()
-      .optional()
-      .describe(
-        `The number of results to return after reranking. Must be less than or
-        equal to the value of "query.topK".`,
-      ),
-    rankFields: z.array(z.string()).describe(
-      `The fields to rerank on. This should include the field name specified
-      in the index's "fieldMap". The "bge-reranker-v2-m3" and
-      "pinecone-rerank-v0" models support only a single rerank field.
-      "cohere-rerank-3.5" supports multiple rerank fields.`,
-    ),
-    query: z
-      .string()
-      .optional()
-      .describe(
-        `An optional query to rerank documents against. If not specified, the
-        same query will be used for both the initial search and the reranking.`,
-      ),
-  })
-  .describe(
-    `Specifies how the results should be reranked. Use a "query" with a "topK"
-    that returns more results than you need; then use "rerank" to select the
-    most relevant "topN" results.`,
-  );
+const RERANK_SCHEMA = RERANK_OPTIONS_SCHEMA.describe(
+  `Specifies how the results should be reranked. Use a "query" with a "topK"
+  that returns more results than you need; then use "rerank" to select the
+  most relevant "topN" results.`,
+);
 
 export const SCHEMA = {
   indexes: z
@@ -75,17 +53,39 @@ export function addCascadingSearchTool(server: McpServer) {
   registerDatabaseTool(
     server,
     'cascading-search',
-    {description: INSTRUCTIONS, inputSchema: SCHEMA},
+    {
+      title: 'Cascading Search',
+      description: INSTRUCTIONS,
+      inputSchema: SCHEMA,
+      annotations: {readOnlyHint: true},
+    },
     async (args, pc) => {
       const {indexes, query, rerank} = args as CascadingSearchArgs;
+      const failures: string[] = [];
       try {
-        const initialResults = await Promise.all(
+        const settled = await Promise.allSettled(
           indexes.map(async (index: IndexSpec) => {
             const ns = pc.index(index.name).namespace(index.namespace || '');
             const results = await ns.searchRecords({query});
             return results;
           }),
         );
+
+        const initialResults = [];
+        for (const [i, outcome] of settled.entries()) {
+          if (outcome.status === 'fulfilled') {
+            initialResults.push(outcome.value);
+          } else {
+            failures.push(
+              `Search failed for index "${indexes[i].name}" ` +
+                `(namespace "${indexes[i].namespace}"): ${formatError(outcome.reason)}`,
+            );
+          }
+        }
+
+        if (initialResults.length === 0 && failures.length > 0) {
+          return errorResult(failures.join('\n\n'));
+        }
 
         const deduplicatedResults: Record<string, Record<string, string>> = {};
         for (const results of initialResults) {
@@ -104,22 +104,30 @@ export function addCascadingSearchTool(server: McpServer) {
                 rerank.query || query.inputs.text,
                 deduplicatedResultsArray,
                 {
-                  topN: rerank.topN || query.topK,
+                  topN: rerank.topN ?? query.topK,
                   rankFields: rerank.rankFields,
                 },
               )
             : [];
 
+        const warning =
+          failures.length > 0
+            ? `Warning: results are partial because some indexes could not be searched:\n${failures.join('\n')}\n\n`
+            : '';
         return {
           content: [
             {
               type: 'text' as const,
-              text: JSON.stringify(rerankedResults, null, 2),
+              text: warning + JSON.stringify(rerankedResults, null, 2),
             },
           ],
         };
       } catch (e) {
-        return {isError: true, content: [{type: 'text' as const, text: formatError(e)}]};
+        const failureContext =
+          failures.length > 0
+            ? `\n\nIn addition, some index searches had already failed:\n${failures.join('\n')}`
+            : '';
+        return errorResult(formatError(e) + failureContext);
       }
     },
   );
