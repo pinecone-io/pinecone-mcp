@@ -1,6 +1,37 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {createMockPinecone, MockPinecone} from '../../test-utils/mock-pinecone.js';
 import {createMockServer, MockServer} from '../../test-utils/mock-server.js';
+import {DOCUMENTS_SCHEMA} from './rerank-documents.js';
+
+// The generated JSON Schema for this tool is guarded centrally in
+// src/tools/tool-schemas.test.ts; these cases only cover runtime validation.
+describe('DOCUMENTS_SCHEMA', () => {
+  it('accepts an array of text documents', () => {
+    expect(DOCUMENTS_SCHEMA.parse(['a', 'b'])).toEqual(['a', 'b']);
+  });
+
+  it('accepts an array of string records', () => {
+    const docs = [{title: 'Doc 1', body: 'Content'}];
+    expect(DOCUMENTS_SCHEMA.parse(docs)).toEqual(docs);
+  });
+
+  it('accepts an empty array', () => {
+    expect(DOCUMENTS_SCHEMA.parse([])).toEqual([]);
+  });
+
+  it('rejects non-array values', () => {
+    expect(DOCUMENTS_SCHEMA.safeParse('not an array').success).toBe(false);
+    expect(DOCUMENTS_SCHEMA.safeParse({title: 'Doc'}).success).toBe(false);
+  });
+
+  it('rejects arrays that mix strings and records', () => {
+    expect(DOCUMENTS_SCHEMA.safeParse(['a', {title: 'Doc'}]).success).toBe(false);
+  });
+
+  it('rejects records with non-string values', () => {
+    expect(DOCUMENTS_SCHEMA.safeParse([{title: 'Doc', score: 1}]).success).toBe(false);
+  });
+});
 
 // Mock the pinecone-client module
 vi.mock('./common/pinecone-client.js', () => ({

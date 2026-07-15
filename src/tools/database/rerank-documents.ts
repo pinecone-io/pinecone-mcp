@@ -27,11 +27,28 @@ export const RerankDocumentsOptions = z
   })
   .optional();
 
-const Documents = z
-  .union([
-    z.array(z.string()).describe('An array of text documents to rerank.'),
-    z.array(z.record(z.string(), z.string())).describe('An array of records to rerank.'),
-  ])
+function isStringRecord(value: unknown) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((item) => typeof item === 'string')
+  );
+}
+
+function isDocumentSet(value: unknown) {
+  return (
+    Array.isArray(value) &&
+    (value.every((item) => typeof item === 'string') || value.every(isStringRecord))
+  );
+}
+
+export const DOCUMENTS_SCHEMA = z
+  .any()
+  .refine(isDocumentSet, {
+    message:
+      'Documents must be an array of text documents (strings) or an array of records with string values.',
+  })
   .describe(
     `A set of documents to rerank. Can either be an array of text documents
     (strings) or an array of records.`,
@@ -40,7 +57,7 @@ const Documents = z
 export const SCHEMA = {
   model: RERANK_MODEL_SCHEMA,
   query: z.string().describe('The query to rerank documents against.'),
-  documents: Documents,
+  documents: DOCUMENTS_SCHEMA,
   options: RerankDocumentsOptions,
 };
 

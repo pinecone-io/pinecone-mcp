@@ -1,6 +1,8 @@
 import {describe, it, expect} from 'vitest';
 import {FIELD_VALUE_SCHEMA, RECORD_SCHEMA} from './upsert-records.js';
 
+// The generated JSON Schema for this tool is guarded centrally in
+// src/tools/tool-schemas.test.ts; these cases only cover runtime validation.
 describe('FIELD_VALUE_SCHEMA', () => {
   it('accepts string values', () => {
     expect(FIELD_VALUE_SCHEMA.parse('hello')).toBe('hello');
