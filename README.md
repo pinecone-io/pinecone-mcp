@@ -20,7 +20,7 @@ This MCP server is focused on improving the experience of developers working wit
 
 To configure the MCP server to access your Pinecone project, you will need to generate an API key using the [console](https://app.pinecone.io). Without an API key, your AI tool will still be able to search documentation. However, it will not be able to manage or query your indexes.
 
-The MCP server requires [Node.js](https://nodejs.org) v18 or later. Ensure that `node` and `npx` are available in your `PATH`.
+The MCP server requires [Node.js](https://nodejs.org) v20 or later. Ensure that `node` and `npx` are available in your `PATH`.
 
 Next, you will need to configure your AI assistant to use the MCP server.
 
@@ -109,7 +109,7 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 - `search-docs`: Search the official Pinecone documentation.
 - `list-indexes`: Lists all Pinecone indexes.
 - `describe-index`: Describes the configuration of an index.
-- `describe-index-stats`: Provides statistics about the data in the index, including the  number of records and available namespaces.
+- `describe-index-stats`: Provides statistics about the data in the index, including the number of records and available namespaces.
 - `create-index-for-model`: Creates a new index that uses an integrated inference model to embed text as vectors.
 - `upsert-records`: Inserts or updates records in an index with integrated inference.
 - `search-records`: Searches for records in an index based on a text query, using integrated inference for embedding. Has options for metadata filtering and reranking.
@@ -124,7 +124,7 @@ Only indexes with integrated inference are supported. Assistants, indexes withou
 
 ### MCP server not appearing in your AI tool
 
-- Ensure Node.js v18 or later is installed: `node --version`
+- Ensure Node.js v20 or later is installed: `node --version`
 - Verify `npx` is available in your PATH: `which npx`
 - Check that your configuration file is in the correct location and has valid JSON syntax
 - Restart your AI tool after making configuration changes

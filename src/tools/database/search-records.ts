@@ -31,7 +31,7 @@ const RERANK_SCHEMA = RERANK_OPTIONS_SCHEMA.optional().describe(
   "topN" results.`,
 );
 
-const SCHEMA = {
+export const SCHEMA = {
   name: z.string().describe('The index to search.'),
   namespace: z.string().describe('The namespace to search.'),
   query: SEARCH_QUERY_SCHEMA,

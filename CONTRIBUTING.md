@@ -60,7 +60,7 @@ Test with an AI tool or coding assistant:
         "/path/to/pinecone-mcp/dist/index.js"
       ],
       "env": {
-        "PINECONE_API_KEY": "<your-api-key>",
+        "PINECONE_API_KEY": "<your-api-key>"
       }
     }
   }

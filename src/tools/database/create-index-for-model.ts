@@ -16,7 +16,7 @@ type EmbedConfig = {
   fieldMap: {text: string};
 };
 
-const SCHEMA = {
+export const SCHEMA = {
   name: z.string().describe('A unique name to identify the new index.'),
   cloud: z
     .enum(['aws', 'gcp', 'azure'])
