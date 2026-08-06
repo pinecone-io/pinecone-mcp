@@ -1,0 +1,31 @@
+name: Integration Tests
+
+# Live tests against a real Pinecone project. Not run on PRs — they need a
+# secret and create billable indexes. Run on a nightly schedule and on demand.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *' # 06:00 UTC daily
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
