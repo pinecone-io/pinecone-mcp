@@ -46,7 +46,7 @@ const RECORD_SET_SCHEMA = z.array(RECORD_SCHEMA).describe(
   records in the index.`,
 );
 
-const SCHEMA = {
+export const SCHEMA = {
   name: z.string().describe('The index to upsert into.'),
   namespace: z.string().describe('The namespace to upsert into.'),
   records: RECORD_SET_SCHEMA,

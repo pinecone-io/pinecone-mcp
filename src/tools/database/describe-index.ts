@@ -8,7 +8,7 @@ text to embed. Call this before upsert-records to learn the required field
 name. Check "status.ready" in the response to confirm the index can accept
 upserts and queries.`;
 
-const SCHEMA = {
+export const SCHEMA = {
   name: z.string().describe('The index to describe.'),
 };
 

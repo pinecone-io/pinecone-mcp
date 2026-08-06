@@ -7,7 +7,7 @@ const INSTRUCTIONS = `Describe the statistics of a Pinecone index, including
 record counts per namespace. Use this to discover which namespaces exist in an
 index. ${FRESHNESS_NOTE}`;
 
-const SCHEMA = {
+export const SCHEMA = {
   name: z.string().describe('The index to describe.'),
 };
 
