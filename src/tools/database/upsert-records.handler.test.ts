@@ -46,9 +46,9 @@ describe('upsert-records tool handler', () => {
 
     expect(mockPc.index).toHaveBeenCalledWith('test-index');
     expect(mockPc._mockIndex.namespace).toHaveBeenCalledWith('test-ns');
-    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([
-      {id: '1', content: 'test content'},
-    ]);
+    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith({
+      records: [{id: '1', content: 'test content'}],
+    });
     expect(result).toEqual({
       content: [{type: 'text', text: expect.stringContaining('Upserted 1 record(s) successfully')}],
     });
@@ -82,9 +82,9 @@ describe('upsert-records tool handler', () => {
       records: [{_id: 'alt-1', content: 'test content'}],
     })) as {content: Array<{text: string}>};
 
-    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith([
-      {_id: 'alt-1', content: 'test content'},
-    ]);
+    expect(mockPc._mockIndex._mockNamespace.upsertRecords).toHaveBeenCalledWith({
+      records: [{_id: 'alt-1', content: 'test content'}],
+    });
     expect(result.content[0].text).toContain('successfully');
   });
 });

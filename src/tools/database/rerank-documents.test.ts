@@ -104,12 +104,12 @@ describe('rerank-documents tool', () => {
       options: {topN: 2},
     });
 
-    expect(mockPc.inference.rerank).toHaveBeenCalledWith(
-      'bge-reranker-v2-m3',
-      'test query',
-      ['doc 1', 'doc 2', 'doc 3'],
-      {topN: 2},
-    );
+    expect(mockPc.inference.rerank).toHaveBeenCalledWith({
+      model: 'bge-reranker-v2-m3',
+      query: 'test query',
+      documents: ['doc 1', 'doc 2', 'doc 3'],
+      topN: 2,
+    });
     expect(result).toEqual({
       content: [{type: 'text', text: JSON.stringify(mockResults, null, 2)}],
     });
@@ -128,12 +128,13 @@ describe('rerank-documents tool', () => {
       options: {topN: 1, rankFields: ['title', 'body']},
     });
 
-    expect(mockPc.inference.rerank).toHaveBeenCalledWith(
-      'cohere-rerank-3.5',
-      'test query',
-      [{title: 'Doc 1', body: 'Content 1'}],
-      {topN: 1, rankFields: ['title', 'body']},
-    );
+    expect(mockPc.inference.rerank).toHaveBeenCalledWith({
+      model: 'cohere-rerank-3.5',
+      query: 'test query',
+      documents: [{title: 'Doc 1', body: 'Content 1'}],
+      topN: 1,
+      rankFields: ['title', 'body'],
+    });
   });
 
   it('returns error response on API failure', async () => {

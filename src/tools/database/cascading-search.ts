@@ -99,15 +99,13 @@ export function addCascadingSearchTool(server: McpServer) {
 
         const rerankedResults =
           deduplicatedResultsArray.length > 0
-            ? await pc.inference.rerank(
-                rerank.model,
-                rerank.query || query.inputs.text,
-                deduplicatedResultsArray,
-                {
-                  topN: rerank.topN ?? query.topK,
-                  rankFields: rerank.rankFields,
-                },
-              )
+            ? await pc.inference.rerank({
+                model: rerank.model,
+                query: rerank.query || query.inputs.text,
+                documents: deduplicatedResultsArray,
+                topN: rerank.topN ?? query.topK,
+                rankFields: rerank.rankFields,
+              })
             : [];
 
         const warning =

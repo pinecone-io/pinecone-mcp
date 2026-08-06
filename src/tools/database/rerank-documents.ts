@@ -84,7 +84,7 @@ export function addRerankDocumentsTool(server: McpServer) {
     },
     async (args, pc) => {
       const {model, query, documents, options} = args as RerankArgs;
-      const results = await pc.inference.rerank(model, query, documents, options);
+      const results = await pc.inference.rerank({model, query, documents, ...options});
       return {
         content: [{type: 'text' as const, text: JSON.stringify(results, null, 2)}],
       };
