@@ -71,7 +71,7 @@ export function addUpsertRecordsTool(server: McpServer) {
     async (args, pc) => {
       const {name, namespace, records} = args as UpsertArgs;
       const ns = pc.index(name).namespace(namespace);
-      await ns.upsertRecords(records);
+      await ns.upsertRecords({records});
       return {
         content: [
           {

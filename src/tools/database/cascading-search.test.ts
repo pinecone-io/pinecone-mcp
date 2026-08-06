@@ -111,10 +111,11 @@ describe('cascading-search tool', () => {
 
     // Should only pass one document to rerank (deduplicated)
     expect(mockPc.inference.rerank).toHaveBeenCalledWith(
-      'bge-reranker-v2-m3',
-      'test query',
-      [{content: 'shared content'}], // First occurrence is kept
-      expect.any(Object),
+      expect.objectContaining({
+        model: 'bge-reranker-v2-m3',
+        query: 'test query',
+        documents: [{content: 'shared content'}], // First occurrence is kept
+      }),
     );
   });
 
@@ -133,10 +134,12 @@ describe('cascading-search tool', () => {
     });
 
     expect(mockPc.inference.rerank).toHaveBeenCalledWith(
-      'bge-reranker-v2-m3',
-      'test query',
-      expect.any(Array),
-      expect.objectContaining({topN: 0}),
+      expect.objectContaining({
+        model: 'bge-reranker-v2-m3',
+        query: 'test query',
+        documents: expect.any(Array),
+        topN: 0,
+      }),
     );
   });
 
