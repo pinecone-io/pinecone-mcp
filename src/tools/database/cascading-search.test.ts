@@ -119,6 +119,41 @@ describe('cascading-search tool', () => {
     );
   });
 
+  it('keeps hits whose _id matches an inherited Object.prototype member', async () => {
+    // Record ids are caller-chosen: upsert-records accepts any "id" string, so an
+    // index keyed by symbol or field name legitimately contains ids like these.
+    mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue({
+      result: {
+        hits: [
+          {_id: 'plain', fields: {content: 'plain hit'}, _score: 0.9},
+          {_id: 'constructor', fields: {content: 'constructor hit'}, _score: 0.8},
+          {_id: 'toString', fields: {content: 'toString hit'}, _score: 0.7},
+          {_id: '__proto__', fields: {content: 'proto hit'}, _score: 0.6},
+        ],
+      },
+    });
+    mockPc.inference.rerank.mockResolvedValue({data: []});
+
+    addCascadingSearchTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('cascading-search');
+    await tool!.handler({
+      indexes: [{name: 'index-1', namespace: 'ns1'}],
+      query: {inputs: {text: 'test query'}, topK: 10},
+      rerank: {model: 'bge-reranker-v2-m3', topN: 5, rankFields: ['content']},
+    });
+
+    expect(mockPc.inference.rerank).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documents: [
+          {content: 'plain hit'},
+          {content: 'constructor hit'},
+          {content: 'toString hit'},
+          {content: 'proto hit'},
+        ],
+      }),
+    );
+  });
+
   it('respects an explicit topN of 0 instead of falling back to topK', async () => {
     mockPc._mockIndex._mockNamespace.searchRecords.mockResolvedValue({
       result: {hits: [{_id: '1', fields: {content: 'result 1'}, _score: 0.9}]},
