@@ -7,7 +7,8 @@ automatically embeds the text field named in "fieldMap". Supports AWS, GCP, and
 Azure cloud providers. This call blocks until the index is ready to accept
 upserts and queries, so no readiness polling is needed afterwards. If an index
 with the same name already exists, it is returned unchanged instead of
-erroring.`;
+erroring. For a new index, prefer create-document-index, which supports
+full-text search and integrated embedding on the same field.`;
 
 type CloudProvider = 'aws' | 'gcp' | 'azure';
 type EmbedModel = 'multilingual-e5-large' | 'llama-text-embed-v2' | 'pinecone-sparse-english-v0';

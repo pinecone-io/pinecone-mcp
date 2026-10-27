@@ -12,6 +12,10 @@ export function createMockIndex() {
   return {
     describeIndexStats: vi.fn(),
     namespace: vi.fn(() => mockNamespace),
+    documents: {
+      upsert: vi.fn(),
+      search: vi.fn(),
+    },
     _mockNamespace: mockNamespace,
   };
 }
@@ -22,6 +26,9 @@ export function createMockPinecone() {
     listIndexes: vi.fn(),
     describeIndex: vi.fn(),
     createIndexForModel: vi.fn(),
+    indexes: {
+      create: vi.fn(),
+    },
     index: vi.fn(() => mockIndex),
     inference: {
       rerank: vi.fn(),

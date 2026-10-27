@@ -21,7 +21,8 @@ type SearchRerank = {
 const INSTRUCTIONS = `Search an index for records that are semantically similar
 to the query text. Only works with integrated-inference indexes (e.g. created
 with create-index-for-model), which embed the query automatically; it fails on
-standard indexes — use describe-index to check the index type. Returns hits
+standard indexes and document indexes (use search-documents for those) — use
+describe-index to check the index type. Returns hits
 with "_id", "_score", and the record's stored "fields". ${FRESHNESS_NOTE}`;
 
 const RERANK_SCHEMA = RERANK_OPTIONS_SCHEMA.optional().describe(

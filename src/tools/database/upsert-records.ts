@@ -5,6 +5,7 @@ import {FRESHNESS_NOTE} from './common/messages.js';
 import {registerDatabaseTool} from './common/register-tool.js';
 
 const INSTRUCTIONS = `Insert or update records in an integrated Pinecone index.
+For a document index, use upsert-documents instead.
 Text in the field named by the index's "fieldMap" is embedded automatically —
 call describe-index first to confirm that field name. Records with an existing
 "id" are overwritten. ${FRESHNESS_NOTE}`;
