@@ -8,9 +8,9 @@ vi.mock('./common/pinecone-client.js', () => ({
 }));
 
 import {getPineconeClient} from './common/pinecone-client.js';
-import {addSearchDocumentsTool, SCHEMA} from './search-documents.js';
+import {addSearchDocumentIndexTool, SCHEMA} from './search-document-index.js';
 
-describe('search-documents tool', () => {
+describe('search-document-index tool', () => {
   let mockPc: MockPinecone;
   let mockServer: MockServer;
 
@@ -21,10 +21,10 @@ describe('search-documents tool', () => {
   });
 
   it('registers with the correct name', () => {
-    addSearchDocumentsTool(mockServer as never);
+    addSearchDocumentIndexTool(mockServer as never);
 
     expect(mockServer.registerTool).toHaveBeenCalledWith(
-      'search-documents',
+      'search-document-index',
       expect.objectContaining({
         description: expect.any(String),
         inputSchema: expect.any(Object),
@@ -38,8 +38,8 @@ describe('search-documents tool', () => {
     mockPc._mockIndex.documents.search.mockResolvedValue({matches, namespace: '__default__'});
     const scoreBy = [{type: 'embed', fields: ['chunk_text'], query: 'money back'}];
 
-    addSearchDocumentsTool(mockServer as never);
-    const tool = mockServer.getRegisteredTool('search-documents');
+    addSearchDocumentIndexTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-document-index');
     const result = await tool!.handler({
       name: 'docs',
       namespace: '__default__',
@@ -63,8 +63,8 @@ describe('search-documents tool', () => {
     mockPc._mockIndex.documents.search.mockResolvedValue({matches: []});
     const filter = {category: {$eq: 'policy'}};
 
-    addSearchDocumentsTool(mockServer as never);
-    const tool = mockServer.getRegisteredTool('search-documents');
+    addSearchDocumentIndexTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-document-index');
     await tool!.handler({
       name: 'docs',
       namespace: '__default__',
@@ -82,8 +82,8 @@ describe('search-documents tool', () => {
   it('returns error response on API failure', async () => {
     mockPc._mockIndex.documents.search.mockRejectedValue(new Error('API error'));
 
-    addSearchDocumentsTool(mockServer as never);
-    const tool = mockServer.getRegisteredTool('search-documents');
+    addSearchDocumentIndexTool(mockServer as never);
+    const tool = mockServer.getRegisteredTool('search-document-index');
     const result = await tool!.handler({
       name: 'docs',
       namespace: '__default__',

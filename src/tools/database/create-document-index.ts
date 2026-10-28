@@ -11,7 +11,7 @@ or a combination. A good default is one field with both, for example
 {"chunk_text": {"fullTextSearch": {"language": "en"}, "embed": {}}}, which
 supports search by meaning and by exact terms on the same text. Fields you only
 need to filter on are not declared here; send them as document metadata.
-Use upsert-documents and search-documents with the new index. This call blocks
+Use upsert-documents and search-document-index with the new index. This call blocks
 until the index is ready. If an index with the same name already exists, it is
 returned unchanged instead of erroring.`;
 

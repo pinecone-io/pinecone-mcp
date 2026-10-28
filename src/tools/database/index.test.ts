@@ -30,7 +30,7 @@ describe('addDatabaseTools', () => {
     expect(registeredTools).toContain('describe-index-stats');
     expect(registeredTools).toContain('create-document-index');
     expect(registeredTools).toContain('upsert-documents');
-    expect(registeredTools).toContain('search-documents');
+    expect(registeredTools).toContain('search-document-index');
     expect(registeredTools).toContain('create-index-for-model');
     expect(registeredTools).toContain('upsert-records');
     expect(registeredTools).toContain('search-records');
