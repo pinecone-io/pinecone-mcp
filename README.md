@@ -112,7 +112,7 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 - `describe-index-stats`: Provides statistics about the data in the index, including the number of records and available namespaces.
 - `create-document-index`: Creates a document index with searchable string fields, each indexed for full-text search, embedded by a hosted model (integrated embedding), or both.
 - `upsert-documents`: Inserts or updates documents in a document index.
-- `search-documents`: Searches a document index by meaning (`embed`, `sparse_embed`) or by keywords (`text`, `query_string`), with optional filters.
+- `search-document-index`: Searches a document index by meaning (`embed`, `sparse_embed`) or by keywords (`text`, `query_string`), with optional filters.
 - `create-index-for-model`: Creates a legacy integrated index that uses an integrated inference model to embed text as vectors.
 - `upsert-records`: Inserts or updates records in an index with integrated inference.
 - `search-records`: Searches for records in an index based on a text query, using integrated inference for embedding. Has options for metadata filtering and reranking.

@@ -5,7 +5,7 @@ import {addCreateDocumentIndexTool} from '../tools/database/create-document-inde
 import {addCreateIndexForModelTool} from '../tools/database/create-index-for-model.js';
 import {addDescribeIndexStatsTool} from '../tools/database/describe-index-stats.js';
 import {addListIndexesTool} from '../tools/database/list-indexes.js';
-import {addSearchDocumentsTool} from '../tools/database/search-documents.js';
+import {addSearchDocumentIndexTool} from '../tools/database/search-document-index.js';
 import {addSearchRecordsTool} from '../tools/database/search-records.js';
 import {addUpsertDocumentsTool} from '../tools/database/upsert-documents.js';
 import {addUpsertRecordsTool} from '../tools/database/upsert-records.js';
@@ -42,7 +42,7 @@ describe.skipIf(!apiKey)('database tools — live Pinecone integration', () => {
   addListIndexesTool(server as never);
   addCreateDocumentIndexTool(server as never);
   addUpsertDocumentsTool(server as never);
-  addSearchDocumentsTool(server as never);
+  addSearchDocumentIndexTool(server as never);
 
   const call = async (name: string, args: Record<string, unknown>): Promise<ToolResult> => {
     const tool = server.getRegisteredTool(name);
@@ -134,7 +134,7 @@ describe.skipIf(!apiKey)('database tools — live Pinecone integration', () => {
       await call('upsert-documents', {name: DOC_INDEX_NAME, namespace: NAMESPACE, documents});
 
       const search = async (type: string, query: string) => {
-        const res = await call('search-documents', {
+        const res = await call('search-document-index', {
           name: DOC_INDEX_NAME,
           namespace: NAMESPACE,
           scoreBy: [{type, fields: [TEXT_FIELD], query}],

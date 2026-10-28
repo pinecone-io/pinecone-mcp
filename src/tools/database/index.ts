@@ -7,7 +7,7 @@ import {addDescribeIndexStatsTool} from './describe-index-stats.js';
 import {addDescribeIndexTool} from './describe-index.js';
 import {addListIndexesTool} from './list-indexes.js';
 import {addRerankDocumentsTool} from './rerank-documents.js';
-import {addSearchDocumentsTool} from './search-documents.js';
+import {addSearchDocumentIndexTool} from './search-document-index.js';
 import {addSearchRecordsTool} from './search-records.js';
 import {addUpsertDocumentsTool} from './upsert-documents.js';
 import {addUpsertRecordsTool} from './upsert-records.js';
@@ -27,7 +27,7 @@ export default function addDatabaseTools(server: McpServer) {
   addDescribeIndexStatsTool(server);
   addCreateDocumentIndexTool(server);
   addUpsertDocumentsTool(server);
-  addSearchDocumentsTool(server);
+  addSearchDocumentIndexTool(server);
   addCreateIndexForModelTool(server);
   addUpsertRecordsTool(server);
   addSearchRecordsTool(server);

@@ -12,8 +12,9 @@ text; Pinecone embeds it with the field's model.
 - "sparse_embed": search a field with "sparseEmbed" the same way.
 - "text": keyword (BM25) search on one or more full-text fields. Good for exact
 terms like IDs, error codes, and names.
-- "query_string": Lucene-style query syntax, with field qualifiers inside the
-query (for example 'chunk_text:"exact phrase"'). Takes no "fields".
+- "query_string": Lucene-style query syntax. Don't pass "fields" (the API
+rejects it); target fields with qualifiers inside the query, for example
+'chunk_text:"exact phrase"', or omit qualifiers to search every full-text field.
 An "embed" or "sparse_embed" clause must be the only clause; "text" and
 "query_string" clauses can be combined. To rank by meaning and by exact terms,
 run two separate searches: their scores are on different scales, so don't
@@ -27,7 +28,7 @@ const SCORE_BY_SCHEMA = z
       .array(z.string())
       .optional()
       .describe(
-        'The fields to score. "embed" and "sparse_embed" take exactly one; "text" takes one or more; "query_string" takes none.',
+        'The fields to score. "embed" and "sparse_embed" take exactly one; "text" takes one or more. Omit for "query_string", which rejects it.',
       ),
     query: z.string().describe('The query text.'),
   })
@@ -63,7 +64,7 @@ export const SCHEMA = {
     .describe('The fields to return with each match. Defaults to ["*"] (all stored fields).'),
 };
 
-type SearchDocumentsArgs = {
+type SearchDocumentIndexArgs = {
   name: string;
   namespace: string;
   scoreBy: Array<{type: string; fields?: string[]; query: string}>;
@@ -72,18 +73,19 @@ type SearchDocumentsArgs = {
   includeFields: string[];
 };
 
-export function addSearchDocumentsTool(server: McpServer) {
+export function addSearchDocumentIndexTool(server: McpServer) {
   registerDatabaseTool(
     server,
-    'search-documents',
+    'search-document-index',
     {
-      title: 'Search Documents',
+      title: 'Search Document Index',
       description: INSTRUCTIONS,
       inputSchema: SCHEMA,
       annotations: {readOnlyHint: true},
     },
     async (args, pc) => {
-      const {name, namespace, scoreBy, topK, filter, includeFields} = args as SearchDocumentsArgs;
+      const {name, namespace, scoreBy, topK, filter, includeFields} =
+        args as SearchDocumentIndexArgs;
       const index = pc.index({name, namespace});
       const results = await index.documents.search({
         scoreBy,
