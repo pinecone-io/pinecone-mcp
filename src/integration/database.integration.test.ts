@@ -1,10 +1,13 @@
 import {afterAll, describe, expect, it} from 'vitest';
 import {Pinecone} from '@pinecone-database/pinecone';
 import {createMockServer} from '../test-utils/mock-server.js';
+import {addCreateDocumentIndexTool} from '../tools/database/create-document-index.js';
 import {addCreateIndexForModelTool} from '../tools/database/create-index-for-model.js';
 import {addDescribeIndexStatsTool} from '../tools/database/describe-index-stats.js';
 import {addListIndexesTool} from '../tools/database/list-indexes.js';
+import {addSearchDocumentsTool} from '../tools/database/search-documents.js';
 import {addSearchRecordsTool} from '../tools/database/search-records.js';
+import {addUpsertDocumentsTool} from '../tools/database/upsert-documents.js';
 import {addUpsertRecordsTool} from '../tools/database/upsert-records.js';
 
 // Live integration test. Exercises the real MCP tool handlers against a real
@@ -19,6 +22,7 @@ const apiKey = process.env.PINECONE_API_KEY;
 
 // Unique, DNS-safe index name (lowercase alphanumerics + hyphens, <=45 chars).
 const INDEX_NAME = `mcp-it-${Math.floor(Date.now() / 1000).toString(36)}`;
+const DOC_INDEX_NAME = `${INDEX_NAME}-doc`;
 const NAMESPACE = 'integration';
 const TEXT_FIELD = 'chunk_text';
 
@@ -36,6 +40,9 @@ describe.skipIf(!apiKey)('database tools — live Pinecone integration', () => {
   addSearchRecordsTool(server as never);
   addDescribeIndexStatsTool(server as never);
   addListIndexesTool(server as never);
+  addCreateDocumentIndexTool(server as never);
+  addUpsertDocumentsTool(server as never);
+  addSearchDocumentsTool(server as never);
 
   const call = async (name: string, args: Record<string, unknown>): Promise<ToolResult> => {
     const tool = server.getRegisteredTool(name);
@@ -50,10 +57,12 @@ describe.skipIf(!apiKey)('database tools — live Pinecone integration', () => {
   afterAll(async () => {
     if (!apiKey) return;
     // Best-effort cleanup so a failed assertion never leaks a paid index.
-    try {
-      await new Pinecone({apiKey}).deleteIndex(INDEX_NAME);
-    } catch {
-      // Index may not have been created; ignore.
+    for (const name of [INDEX_NAME, DOC_INDEX_NAME]) {
+      try {
+        await new Pinecone({apiKey}).deleteIndex(name);
+      } catch {
+        // Index may not have been created; ignore.
+      }
     }
   }, 60_000);
 
@@ -97,6 +106,55 @@ describe.skipIf(!apiKey)('database tools — live Pinecone integration', () => {
       // 4. The most relevant hit should be the Paris record.
       expect(hits.length).toBeGreaterThan(0);
       expect(hits[0]._id).toBe('rec1');
+    },
+    CREATE_TIMEOUT_MS,
+  );
+
+  it(
+    'creates a document index, upserts, and searches by meaning and by exact terms',
+    async () => {
+      await call('create-document-index', {
+        name: DOC_INDEX_NAME,
+        fields: {[TEXT_FIELD]: {fullTextSearch: {language: 'en'}, embed: {}}},
+        cloud: 'aws',
+        region: 'us-east-1',
+      });
+
+      const documents = [
+        {
+          _id: 'doc1',
+          [TEXT_FIELD]: 'Refund requests must be submitted within 30 days of purchase.',
+        },
+        {
+          _id: 'doc2',
+          [TEXT_FIELD]: 'Error E1042: the connection timed out after 30 seconds.',
+        },
+        {_id: 'doc3', [TEXT_FIELD]: 'To reset your password, open Settings and choose Security.'},
+      ];
+      await call('upsert-documents', {name: DOC_INDEX_NAME, namespace: NAMESPACE, documents});
+
+      const search = async (type: string, query: string) => {
+        const res = await call('search-documents', {
+          name: DOC_INDEX_NAME,
+          namespace: NAMESPACE,
+          scoreBy: [{type, fields: [TEXT_FIELD], query}],
+          topK: 3,
+          includeFields: [TEXT_FIELD],
+        });
+        return JSON.parse(res.content[0].text) as Array<{_id: string}>;
+      };
+
+      const deadline = Date.now() + SEARCH_TIMEOUT_MS;
+      let meaning: Array<{_id: string}> = [];
+      while (Date.now() < deadline) {
+        meaning = await search('embed', 'how do I get my money back?');
+        if (meaning.length > 0) break;
+        await sleep(3_000);
+      }
+
+      expect(meaning[0]?._id).toBe('doc1');
+      const terms = await search('text', 'E1042');
+      expect(terms.map((m) => m._id)).toEqual(['doc2']);
     },
     CREATE_TIMEOUT_MS,
   );

@@ -28,12 +28,15 @@ describe('addDatabaseTools', () => {
     expect(registeredTools).toContain('list-indexes');
     expect(registeredTools).toContain('describe-index');
     expect(registeredTools).toContain('describe-index-stats');
+    expect(registeredTools).toContain('create-document-index');
+    expect(registeredTools).toContain('upsert-documents');
+    expect(registeredTools).toContain('search-documents');
     expect(registeredTools).toContain('create-index-for-model');
     expect(registeredTools).toContain('upsert-records');
     expect(registeredTools).toContain('search-records');
     expect(registeredTools).toContain('rerank-documents');
     expect(registeredTools).toContain('cascading-search');
-    expect(registeredTools.length).toBe(8);
+    expect(registeredTools.length).toBe(11);
   });
 
   it('still registers tools when API key is not set, with a warning', async () => {
@@ -44,7 +47,7 @@ describe('addDatabaseTools', () => {
 
     addDatabaseTools(mockServer as never);
 
-    expect(mockServer.getRegisteredToolNames().length).toBe(8);
+    expect(mockServer.getRegisteredToolNames().length).toBe(11);
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('PINECONE_API_KEY'));
 
     consoleSpy.mockRestore();

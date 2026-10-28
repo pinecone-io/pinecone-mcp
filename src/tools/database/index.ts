@@ -1,12 +1,15 @@
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {PINECONE_API_KEY} from '../../constants.js';
 import {addCascadingSearchTool} from './cascading-search.js';
+import {addCreateDocumentIndexTool} from './create-document-index.js';
 import {addCreateIndexForModelTool} from './create-index-for-model.js';
 import {addDescribeIndexStatsTool} from './describe-index-stats.js';
 import {addDescribeIndexTool} from './describe-index.js';
 import {addListIndexesTool} from './list-indexes.js';
 import {addRerankDocumentsTool} from './rerank-documents.js';
+import {addSearchDocumentsTool} from './search-documents.js';
 import {addSearchRecordsTool} from './search-records.js';
+import {addUpsertDocumentsTool} from './upsert-documents.js';
 import {addUpsertRecordsTool} from './upsert-records.js';
 
 export default function addDatabaseTools(server: McpServer) {
@@ -22,6 +25,9 @@ export default function addDatabaseTools(server: McpServer) {
   addListIndexesTool(server);
   addDescribeIndexTool(server);
   addDescribeIndexStatsTool(server);
+  addCreateDocumentIndexTool(server);
+  addUpsertDocumentsTool(server);
+  addSearchDocumentsTool(server);
   addCreateIndexForModelTool(server);
   addUpsertRecordsTool(server);
   addSearchRecordsTool(server);

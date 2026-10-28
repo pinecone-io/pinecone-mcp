@@ -20,7 +20,7 @@ This MCP server is focused on improving the experience of developers working wit
 
 To configure the MCP server to access your Pinecone project, you will need to generate an API key using the [console](https://app.pinecone.io). Without an API key, your AI tool will still be able to search documentation. However, it will not be able to manage or query your indexes.
 
-The MCP server requires [Node.js](https://nodejs.org) v20 or later. Ensure that `node` and `npx` are available in your `PATH`.
+The MCP server requires [Node.js](https://nodejs.org) v22 or later. Ensure that `node` and `npx` are available in your `PATH`.
 
 Next, you will need to configure your AI assistant to use the MCP server.
 
@@ -110,7 +110,10 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 - `list-indexes`: Lists all Pinecone indexes.
 - `describe-index`: Describes the configuration of an index.
 - `describe-index-stats`: Provides statistics about the data in the index, including the number of records and available namespaces.
-- `create-index-for-model`: Creates a new index that uses an integrated inference model to embed text as vectors.
+- `create-document-index`: Creates a document index with searchable string fields, each indexed for full-text search, embedded by a hosted model (integrated embedding), or both.
+- `upsert-documents`: Inserts or updates documents in a document index.
+- `search-documents`: Searches a document index by meaning (`embed`, `sparse_embed`) or by keywords (`text`, `query_string`), with optional filters.
+- `create-index-for-model`: Creates a legacy integrated index that uses an integrated inference model to embed text as vectors.
 - `upsert-records`: Inserts or updates records in an index with integrated inference.
 - `search-records`: Searches for records in an index based on a text query, using integrated inference for embedding. Has options for metadata filtering and reranking.
 - `cascading-search`: Searches for records across multiple indexes, deduplicating and reranking the results.
@@ -118,13 +121,13 @@ Pinecone Developer MCP Server provides the following tools for AI assistants to 
 
 ### Limitations
 
-Only indexes with integrated inference are supported. Assistants, indexes without integrated inference, standalone embeddings, and vector search are not supported.
+Document indexes with string fields (full-text search and integrated embedding) and legacy integrated indexes are supported. Assistants, standalone embeddings, and search with your own vectors are not supported.
 
 ## Troubleshooting
 
 ### MCP server not appearing in your AI tool
 
-- Ensure Node.js v20 or later is installed: `node --version`
+- Ensure Node.js v22 or later is installed: `node --version`
 - Verify `npx` is available in your PATH: `which npx`
 - Check that your configuration file is in the correct location and has valid JSON syntax
 - Restart your AI tool after making configuration changes
