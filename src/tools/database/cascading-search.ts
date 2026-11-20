@@ -87,15 +87,16 @@ export function addCascadingSearchTool(server: McpServer) {
           return errorResult(failures.join('\n\n'));
         }
 
-        const deduplicatedResults: Record<string, Record<string, string>> = {};
+        // A Map has no inherited keys, so ids such as "constructor" or "__proto__" are kept.
+        const deduplicatedResults = new Map<string, Record<string, string>>();
         for (const results of initialResults) {
           for (const hit of results.result.hits) {
-            if (!deduplicatedResults[hit._id]) {
-              deduplicatedResults[hit._id] = hit.fields as Record<string, string>;
+            if (!deduplicatedResults.has(hit._id)) {
+              deduplicatedResults.set(hit._id, hit.fields as Record<string, string>);
             }
           }
         }
-        const deduplicatedResultsArray = Object.values(deduplicatedResults);
+        const deduplicatedResultsArray = Array.from(deduplicatedResults.values());
 
         const rerankedResults =
           deduplicatedResultsArray.length > 0
